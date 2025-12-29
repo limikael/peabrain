@@ -1,25 +1,14 @@
-console.log("will blink some more...");
-console.log("and even more...");
 
-console.log("will blink some more...");
-console.log("and even more...");
+function blinkOff() {
+	//console.log("blink off...");
+	digitalWrite(8,0);
+	setTimeout(blinkOn,100);
+}
 
-console.log("will blink some more...");
-console.log("and even more...");
+function blinkOn() {
+	//console.log("blink on...");
+	digitalWrite(8,1);
+	setTimeout(blinkOff,100);
+}
 
-console.log("will blink some more...");
-console.log("and even more...");
-
-console.log("will blink some more...");
-console.log("and even more...");
-
-console.log("will blink some more...");
-console.log("and even more...");
-
-setTimeout(()=>{
-	digitalWrite(8,1)
-},1000);
-
-setTimeout(()=>{
-	digitalWrite(8,0)
-},2000);
+blinkOn();

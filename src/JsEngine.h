@@ -4,15 +4,36 @@ extern "C" {
 #include "quickjs.h"
 }
 
-#define MAX_REPL 512
+#include "FS.h"
+#include "SPIFFS.h"
 
 using JSFunctionWrapper=std::function<JSValue(int, JSValueConst*)>;
+
+struct JsCString {
+    JSContext *ctx;
+    const char *str;
+
+    JsCString(JSContext *ctx, JSValue val)
+        : ctx(ctx), str(JS_ToCString(ctx, val)) {}
+
+    ~JsCString() {
+        if (str) JS_FreeCString(ctx, str);
+    }
+
+    const char *c_str() { return str; }
+};
 
 class JsEngineTimeout {
 public:
 	uint32_t id;
 	uint32_t deadline;
 	JSValue func;
+};
+
+class JsFile {
+public:
+	uint32_t id;
+	File file;
 };
 
 class JsEngine {
@@ -39,8 +60,10 @@ private:
 	JSValue consoleLog(int argc, JSValueConst *argv);
 	JSValue serialWrite(int argc, JSValueConst *argv);
 	JSValue setSerialDataFunc(int argc, JSValueConst *argv);
-	JSValue writeFile(int argc, JSValueConst *argv);
-	JSValue readFile(int argc, JSValueConst *argv);
+	JSValue fileOpen(int argc, JSValueConst *argv);
+	JSValue fileClose(int argc, JSValueConst *argv);
+	JSValue fileRead(int argc, JSValueConst *argv);
+	JSValue fileWrite(int argc, JSValueConst *argv);
 	JSValue scheduleReload(int argc, JSValueConst *argv);
 	JSValue getExceptionMessage();
 	void reset();
@@ -49,12 +72,10 @@ private:
 	JSContext *ctx=nullptr;
 	Stream& stream;
 	std::vector<JsEngineTimeout> timeouts;
+	std::vector<JsFile> files;
 	JSValue serialDataFunc;
 	JSValue bootError;
 	bool reloadScheduled,began=false;
 	int startCount=0;
 	std::vector<JSFunctionWrapper*> funcs;
-
-	char replBuf[MAX_REPL];
-	size_t replLen=0;
 };

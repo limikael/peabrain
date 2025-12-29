@@ -10,9 +10,9 @@ export default class Device extends EventEmitter {
     this.nextId = 1;
     this.pending = new Map();
 
-    this.port.on("data",data=>{
+    /*this.port.on("data",data=>{
       process.stdout.write(data);
-    });
+    });*/
 
     this.parser.on('data', (line) => {
       line=line.trim().replace(/^>+|>+$/g, '').trim();
@@ -21,7 +21,7 @@ export default class Device extends EventEmitter {
       try {
         msg = JSON.parse(line);
       } catch (e) {
-        //console.log(line);
+        console.log(line);
         return;
       }
 
@@ -54,31 +54,6 @@ export default class Device extends EventEmitter {
     const id = this.nextId++;
     const msg = { type: 'call', id, method, params };
     let data=JSON.stringify(msg) + '\n';
-
-    /*const CHUNK = 64; // or 128
-
-    this.port.on("drain",()=>{
-      console.log("******************** drain...");
-    })
-
-    for (let i = 0; i < data.length; i += CHUNK) {
-      const slice = data.slice(i, i + CHUNK);
-
-      //console.log("writing, i="+i+" d="+data.length);
-
-      await new Promise(resolve=>{
-        this.port.write(slice,resolve);
-      });
-      //this.port.write(slice,()=>{console.log("********************* cb")});
-  
-      //this.port.once("drain",()=>{console.log("********* drain")});
-      //await new Promise(r=>setTimeout(r,100));
-
-      //if (!this.port.write(slice)) {
-      //  await once(this.port, 'drain');
-      //}
-    }*/
-
 
     return new Promise((resolve, reject) => {
       this.pending.set(id, { resolve, reject });

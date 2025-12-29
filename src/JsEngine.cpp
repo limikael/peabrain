@@ -1,6 +1,4 @@
 #include "JsEngine.h"
-#include "FS.h"        // File, FS
-#include "SPIFFS.h"    // SPIFFS object
 
 extern const char boot_js[];
 extern const unsigned int boot_js_len;
@@ -54,114 +52,6 @@ void JsEngine::close() {
 	rt=nullptr;
 }
 
-JSValue JsEngine::serialWrite(int argc, JSValueConst *argv) {
-    const char *s = JS_ToCString(ctx, argv[0]);
-    if (s) {
-        for (int i=0; i<strlen(s); i++)
-            stream.write(s[i]);
-
-        //stream.print(s);
-        JS_FreeCString(ctx, s);
-    }
-
-    return JS_UNDEFINED;
-}
-
-JSValue JsEngine::setSerialDataFunc(int argc, JSValueConst *argv) {
-    JS_FreeValue(ctx, serialDataFunc);
-
-    serialDataFunc=JS_DupValue(ctx, argv[0]);
-
-    return JS_UNDEFINED;
-}
-
-JSValue JsEngine::digitalWrite(int argc, JSValueConst *argv) {
-	int32_t pin=0, val=0;
-
-    JS_ToInt32(ctx,&pin,argv[0]);
-    JS_ToInt32(ctx,&val,argv[1]);
-
-    ::digitalWrite(pin,val);
-
-    return JS_UNDEFINED;
-}
-
-JSValue JsEngine::setTimeout(int argc, JSValueConst *argv) {
-	//stream.printf("setting timeout\n");
-
-    uint32_t until;
-    JS_ToUint32(ctx,&until,argv[1]);
-
-    JsEngineTimeout t;
-    t.id=1;
-    t.deadline=millis()+until;
-    t.func=JS_DupValue(ctx, argv[0]);
-
-    timeouts.push_back(t);
-
-    return JS_NewUint32(ctx,t.id);
-}
-
-JSValue JsEngine::writeFile(int argc, JSValueConst *argv) {
-    // Check number of arguments
-    if (argc < 2) return JS_ThrowTypeError(ctx, "writeFile(path, content) requires 2 arguments");
-
-    // Convert JS values to C++ strings
-    const char *path = JS_ToCString(ctx, argv[0]);
-    const char *content = JS_ToCString(ctx, argv[1]);
-
-    if (!path || !content) {
-        if (path) JS_FreeCString(ctx, path);
-        if (content) JS_FreeCString(ctx, content);
-        return JS_ThrowTypeError(ctx, "invalid arguments");
-    }
-
-    // Open file for writing
-    File f = SPIFFS.open(path, FILE_WRITE);
-    if (!f) {
-        JS_FreeCString(ctx, path);
-        JS_FreeCString(ctx, content);
-        return JS_ThrowInternalError(ctx, "failed to open file for writing");
-    }
-
-    // Write content
-    f.print(content);
-    f.close();
-
-    // Free C strings
-    JS_FreeCString(ctx, path);
-    JS_FreeCString(ctx, content);
-
-    return JS_UNDEFINED;
-}
-
-JSValue JsEngine::readFile(int argc, JSValueConst *argv) {
-    if (argc < 1) return JS_ThrowTypeError(ctx, "readFile(path) requires 1 argument");
-
-    const char *path = JS_ToCString(ctx, argv[0]);
-    if (!path) return JS_ThrowTypeError(ctx, "invalid path");
-
-    File f = SPIFFS.open(path, FILE_READ);
-    if (!f) {
-        JS_FreeCString(ctx, path);
-        return JS_ThrowInternalError(ctx, "failed to open file for reading");
-    }
-
-    // Read entire file into a string
-    String content = f.readString();
-    f.close();
-    JSValue jsContent = JS_NewString(ctx, content.c_str());
-
-    JS_FreeCString(ctx, path);
-    return jsContent;
-}
-
-JSValue JsEngine::scheduleReload(int argc, JSValueConst *argv) {
-    stream.printf("Schedule reload...\n");
-    reloadScheduled=true;
-    return JS_UNDEFINED;
-}
-
 JSValue JsEngine::newFunction(JSFunctionWrapper func, int length) {
     auto *heapFunc=new JSFunctionWrapper(std::move(func));
     funcs.push_back(heapFunc);
@@ -205,8 +95,10 @@ void JsEngine::reset() {
     addGlobal("serialWrite",newMethod(this,&JsEngine::serialWrite,1));
     addGlobal("setTimeout",newMethod(this,&JsEngine::setTimeout,2));
     addGlobal("setSerialDataFunc",newMethod(this,&JsEngine::setSerialDataFunc,1));
-    addGlobal("writeFile",newMethod(this,&JsEngine::writeFile,2));
-    addGlobal("readFile",newMethod(this,&JsEngine::readFile,1));
+    addGlobal("fileOpen",newMethod(this,&JsEngine::fileOpen,2));
+    addGlobal("fileClose",newMethod(this,&JsEngine::fileClose,1));
+    addGlobal("fileRead",newMethod(this,&JsEngine::fileRead,1));
+    addGlobal("fileWrite",newMethod(this,&JsEngine::fileWrite,1));
     addGlobal("scheduleReload",newMethod(this,&JsEngine::scheduleReload,1));
 
     JSValue global=JS_GetGlobalObject(ctx);
@@ -219,7 +111,7 @@ void JsEngine::reset() {
 
     JS_FreeValue(ctx, val);
 
-    /*if (JS_IsUndefined(bootError)) {
+    if (JS_IsUndefined(bootError)) {
         File f = SPIFFS.open("/boot.js", FILE_READ);
         if (f) {
             String content = f.readString();
@@ -228,22 +120,17 @@ void JsEngine::reset() {
             int len=strlen(content.c_str());
             stream.printf("running program...\n");
             JSValue bootval=JS_Eval(ctx, content.c_str(), len, "<builtin>", JS_EVAL_TYPE_GLOBAL);
-            //if (JS_IsException(bootval)) {
-            //    stream.printf("got ex...\n");
-            //    bootError=getExceptionMessage();
-            //}
+            if (JS_IsException(bootval))
+                bootError=getExceptionMessage();
 
             JS_FreeValue(ctx,bootval);
         }
-    }*/
+    }
 
     startCount++;
     stream.printf("Started, count=%d\n",startCount);
     stream.printf("{\"type\": \"started\"}\n",startCount);
 }
-
-/*int total=0;
-int chunks=0;*/
 
 void JsEngine::loop() {
     if (!began) {
@@ -264,7 +151,7 @@ void JsEngine::loop() {
             JS_FreeCString(ctx, out);
         }
 
-        //delay(1000);
+        delay(1000);
     }
 
     std::vector<JsEngineTimeout> expired;
@@ -287,44 +174,145 @@ void JsEngine::loop() {
         JS_FreeValue(ctx,t.func);
     }
 
-    /*while (stream.available()) {
-        int c = stream.read();
-        if (c < 0) break;
-
-        stream.write(c);
-        //total++;
-    }*/
-
-    /*if (total>500) {
-        stream.printf("t: %d, c: %d\n",total,chunks);
-        total=0;
-    }*/
-
-    //while (stream.available()) {
-        int len=stream.available();
-        if (len) {
-            char s[len+1];
-            for (int i=0; i<len; i++) {
-                int c=stream.read();
-                //stream.write(c);
-                s[i]=c;
-            }
-
-            s[len]='\0';
-
-            //stream.printf("reading: %d %s\n",len,s);
-
-            ///*if (s[0]=='#') {
-            //    stream.printf("restart...\n");
-            //    reloadScheduled=true;
-            //}
-
-            JSValue args[1];
-            args[0]=JS_NewString(ctx,s);
-
-            JSValue ret=JS_Call(ctx,serialDataFunc,JS_UNDEFINED,1,args);
-            JS_FreeValue(ctx,args[0]);
-            JS_FreeValue(ctx,ret);
+    int len=stream.available();
+    if (len) {
+        char s[len+1];
+        for (int i=0; i<len; i++) {
+            int c=stream.read();
+            //stream.write(c);
+            s[i]=c;
         }
-    //}
+
+        s[len]='\0';
+
+        //stream.printf("reading: %d %s\n",len,s);
+
+        ///*if (s[0]=='#') {
+        //    stream.printf("restart...\n");
+        //    reloadScheduled=true;
+        //}
+
+        JSValue args[1];
+        args[0]=JS_NewString(ctx,s);
+
+        JSValue ret=JS_Call(ctx,serialDataFunc,JS_UNDEFINED,1,args);
+        JS_FreeValue(ctx,args[0]);
+        JS_FreeValue(ctx,ret);
+    }
+}
+
+JSValue JsEngine::serialWrite(int argc, JSValueConst *argv) {
+    const char *s = JS_ToCString(ctx, argv[0]);
+    if (s) {
+        for (int i=0; i<strlen(s); i++)
+            stream.write(s[i]);
+
+        //stream.print(s);
+        JS_FreeCString(ctx, s);
+    }
+
+    return JS_UNDEFINED;
+}
+
+JSValue JsEngine::setSerialDataFunc(int argc, JSValueConst *argv) {
+    JS_FreeValue(ctx, serialDataFunc);
+
+    serialDataFunc=JS_DupValue(ctx, argv[0]);
+
+    return JS_UNDEFINED;
+}
+
+JSValue JsEngine::digitalWrite(int argc, JSValueConst *argv) {
+    int32_t pin=0, val=0;
+
+    JS_ToInt32(ctx,&pin,argv[0]);
+    JS_ToInt32(ctx,&val,argv[1]);
+
+    ::digitalWrite(pin,val);
+
+    return JS_UNDEFINED;
+}
+
+JSValue JsEngine::setTimeout(int argc, JSValueConst *argv) {
+    uint32_t until;
+    JS_ToUint32(ctx,&until,argv[1]);
+
+    JsEngineTimeout t;
+    t.id=1;
+    t.deadline=millis()+until;
+    t.func=JS_DupValue(ctx, argv[0]);
+    timeouts.push_back(t);
+
+    return JS_NewUint32(ctx,t.id);
+}
+
+JSValue JsEngine::fileOpen(int argc, JSValueConst *argv) {
+    JsCString path(ctx, argv[0]);
+    JsCString mode(ctx, argv[1]);
+
+    File f=SPIFFS.open(path.c_str(), mode.c_str());
+    if (!f)
+        return JS_ThrowInternalError(ctx, "failed to open file");
+
+    JsFile jsf;
+    jsf.id=1;
+    jsf.file=f;
+    files.push_back(jsf);
+
+    return JS_NewUint32(ctx,jsf.id);
+}
+
+JSValue JsEngine::fileRead(int argc, JSValueConst *argv) {
+    uint32_t fid;
+    JS_ToUint32(ctx,&fid,argv[0]);
+
+    auto it=std::find_if(files.begin(), files.end(),
+        [&](const JsFile& f) { return f.id == fid; });
+
+    if (it==files.end())
+        return JS_ThrowInternalError(ctx, "invalid file id");
+
+    const size_t N=128;
+    char buffer[N];
+    size_t bytesRead=it->file.readBytes(buffer, N);
+
+    return JS_NewStringLen(ctx, buffer, bytesRead);
+}
+
+JSValue JsEngine::fileWrite(int argc, JSValueConst *argv) {
+    uint32_t fid;
+    JS_ToUint32(ctx,&fid,argv[0]);
+    JsCString data(ctx, argv[1]);
+
+    auto it=std::find_if(files.begin(), files.end(),
+        [&](const JsFile& f) { return f.id == fid; });
+
+    if (it==files.end())
+        return JS_ThrowInternalError(ctx, "invalid file id");
+
+    //it->file.print("helloooo");
+    //it->file.write((uint8_t *)data.c_str(),strlen(data.c_str()));
+    it->file.print(data.c_str());
+    return JS_UNDEFINED;
+}
+
+JSValue JsEngine::fileClose(int argc, JSValueConst *argv) {
+    uint32_t fid;
+    JS_ToUint32(ctx,&fid,argv[0]);
+
+    auto it=std::find_if(files.begin(), files.end(),
+        [&](const JsFile& f) { return f.id == fid; });
+
+    if (it==files.end())
+        return JS_ThrowInternalError(ctx, "invalid file id");
+
+    it->file.close();
+    files.erase(it);
+    return JS_UNDEFINED;
+}
+
+JSValue JsEngine::scheduleReload(int argc, JSValueConst *argv) {
+    stream.printf("Schedule reload...\n");
+    reloadScheduled=true;
+    return JS_UNDEFINED;
 }

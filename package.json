@@ -7,6 +7,9 @@
     "build:boot": "esbuild --bundle --outfile=target/boot.js api/boot.js && xxd -i -n boot_js target/boot.js > src/boot_js.c",
     "lab": "pnpm build:boot && pio run --target=upload"
   },
+  "bin": {
+    "peabrain": "api/peabrain.js"
+  },
   "type": "module",
   "keywords": [],
   "author": "",

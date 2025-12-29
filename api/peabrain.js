@@ -2,6 +2,7 @@
 import {Command, program} from "commander";
 import fs from "node:fs";
 import Device from "./Device.js";
+import {stringChunkify} from "./js-util.js";
 
 program
     .name('peabrain')
@@ -14,11 +15,16 @@ program
     .option('-p, --port <path>', 'serial port path', '/dev/ttyUSB0')
     .action(async (file, options) => {
         try {
-            const content = fs.readFileSync(file, 'utf8');
-            const device = new Device(options.port);
             console.log(`Deploy: ${file}`);
-            await device.writeFile('/boot.js', content);
-            /*await device.scheduleReload();
+            let device=new Device(options.port);
+            let contents=stringChunkify(fs.readFileSync(file, 'utf8'),64);
+            let fid=await device.fileOpen("/boot.js", "w");
+            for (let content of contents)
+                await device.fileWrite(fid,content);
+
+            await device.fileClose(fid);
+
+            await device.scheduleReload();
             await new Promise(resolve=>{
                 device.on("message",message=>{
                     if (message.type=="started")
@@ -26,7 +32,7 @@ program
                 });
             });
 
-            await device.close();*/
+            await device.close();
         }
 
         catch (err) {

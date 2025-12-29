@@ -13,7 +13,7 @@ console.log=s=>{
 
 repl=new Repl(serial);
 repl.on("message",message=>{
-	if (message.type!="call")
+	if (message.type!="call" && !message.method)
 		return;
 
 	try {
