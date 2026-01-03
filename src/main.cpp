@@ -1,9 +1,11 @@
 #include "JsEngine.h"
+#include "CanPlugin.h"
 #include <Arduino.h>
 #include "FS.h"
 #include "SPIFFS.h"
 
 JsEngine js(Serial);
+CanPlugin can(5,4);
 
 void myTask(void *arg) {
     for (;;) {
@@ -13,6 +15,8 @@ void myTask(void *arg) {
 }
 
 void setup() {
+    js.addPlugin(&can);
+
 	pinMode(8,OUTPUT);
 	digitalWrite(8,0);
 

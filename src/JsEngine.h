@@ -9,6 +9,17 @@ extern "C" {
 
 using JSFunctionWrapper=std::function<JSValue(int, JSValueConst*)>;
 
+class JsEngine;
+
+class JsPlugin {
+public:
+    virtual void loop() {}
+    virtual void setJsEngine(JsEngine& jsEngine) = 0;
+    virtual void init() {};
+    virtual void close() {};
+    virtual ~JsPlugin() {}
+};
+
 struct JsCString {
     JSContext *ctx;
     const char *str;
@@ -42,6 +53,7 @@ public:
 	void loop();
 	void begin();
 	void addGlobal(const char *name, JSValue val);
+	void addRawFunction(const char *name, void *func, int argc);
 	JSValue newFunction(JSFunctionWrapper func, int length=0);
 	template<typename T>
 	JSValue newMethod(T* obj, JSValue (T::*memFunc)(int, JSValueConst*), int length=0) {
@@ -52,7 +64,9 @@ public:
 	    return newFunction(wrapper,length);
 	}
 
-	//void run(const char *s);
+	void addPlugin(JsPlugin *plugin);
+	JSContext* getContext() { return ctx; } 
+	Stream* getStream() { return &stream; }
 
 private:
 	JSValue digitalWrite(int argc, JSValueConst *argv);
@@ -73,6 +87,7 @@ private:
 	Stream& stream;
 	std::vector<JsEngineTimeout> timeouts;
 	std::vector<JsFile> files;
+	std::vector<JsPlugin*> plugins;
 	JSValue serialDataFunc;
 	JSValue bootError;
 	bool reloadScheduled,began=false;

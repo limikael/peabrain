@@ -3,6 +3,8 @@ import {Command, program} from "commander";
 import fs from "node:fs";
 import Device from "./Device.js";
 import {stringChunkify} from "./js-util.js";
+import * as esbuild from "esbuild";
+import path from "node:path";
 
 program
     .name('peabrain')
@@ -16,8 +18,27 @@ program
     .action(async (file, options) => {
         try {
             console.log(`Deploy: ${file}`);
+            const result = await esbuild.build({
+                stdin: {
+                    contents: fs.readFileSync(file, 'utf8'),
+                    sourcefile: file,
+                    resolveDir: path.dirname(file), //process.cwd(),
+                },
+                minify: true,
+                bundle: true,
+                write: false,        // <-- critical
+                platform: "neutral",// or "node", "browser"
+                //format: "esm",       // or "cjs"
+                format: "iife",       // or "cjs"
+                conditions: ["mcu", "import", "default"]
+            });
+
+            let source=new TextDecoder("utf-8").decode(result.outputFiles[0].contents);
+            //console.log(source);
+
+            console.log(`Size: ${source.length} bytes`);
             let device=new Device(options.port);
-            let contents=stringChunkify(fs.readFileSync(file, 'utf8'),64);
+            let contents=stringChunkify(source,64);
             let fid=await device.fileOpen("/boot.js", "w");
             for (let content of contents)
                 await device.fileWrite(fid,content);

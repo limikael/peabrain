@@ -23,11 +23,19 @@ JsEngine::JsEngine(Stream& stream)
 	//reset();
 }
 
+void JsEngine::addPlugin(JsPlugin *plugin) {
+    plugin->setJsEngine(*this);
+    plugins.push_back(plugin);
+}
+
 void JsEngine::begin() {
 	reset();
 }
 
 void JsEngine::close() {
+    for (JsPlugin* p: plugins)
+        p->close();
+
     for (auto *f : funcs) delete f;
     funcs.clear();
 
@@ -65,6 +73,37 @@ JSValue JsEngine::newFunction(JSFunctionWrapper func, int length) {
     return jsFunc;
 }
 
+void JsEngine::addRawFunction(const char *name, void *func, int argnum) {
+    auto f=newFunction([this, func, argnum](int argc, JSValueConst* argv) -> JSValue {
+        uint32_t ret;
+        uint32_t params[argnum];
+
+        for (int i=0; i<argnum; i++)
+            JS_ToUint32(ctx,&params[i],argv[i]);
+
+        auto func0=(uint32_t (*)())func;
+        auto func1=(uint32_t (*)(uint32_t))func;
+        auto func2=(uint32_t (*)(uint32_t, uint32_t))func;
+        auto func3=(uint32_t (*)(uint32_t, uint32_t, uint32_t))func;
+ 
+        switch (argnum) {
+            case 0: ret=func0(); break;
+            case 1: ret=func1(params[0]); break;
+            case 2: ret=func2(params[0],params[1]); break;
+            case 3: 
+                //stream.printf("setting %d %d %d\n",params[0],params[1],params[2]);
+                ret=func3(params[0],params[1],params[2]); 
+                break;
+        }
+
+        //stream.printf("ret: %d\n",ret);
+
+        return JS_NewUint32(ctx, ret);
+    },argnum);
+
+    addGlobal(name,f);
+}
+
 void JsEngine::addGlobal(const char *name, JSValue val) {
     JSValue global=JS_GetGlobalObject(ctx);
     JS_SetPropertyStr(ctx,global,name,val);
@@ -94,6 +133,7 @@ void JsEngine::reset() {
     addGlobal("digitalWrite",newMethod(this,&JsEngine::digitalWrite,2));
     addGlobal("serialWrite",newMethod(this,&JsEngine::serialWrite,1));
     addGlobal("setTimeout",newMethod(this,&JsEngine::setTimeout,2));
+    //addGlobal("setInterval",newMethod(this,&JsEngine::setInterval,2));
     addGlobal("setSerialDataFunc",newMethod(this,&JsEngine::setSerialDataFunc,1));
     addGlobal("fileOpen",newMethod(this,&JsEngine::fileOpen,2));
     addGlobal("fileClose",newMethod(this,&JsEngine::fileClose,1));
@@ -103,6 +143,9 @@ void JsEngine::reset() {
 
     JSValue global=JS_GetGlobalObject(ctx);
     addGlobal("global",global);
+
+    for (JsPlugin* p: plugins)
+        p->init();
 
     bootError=JS_UNDEFINED;
     JSValue val=JS_Eval(ctx, boot_js, boot_js_len, "<builtin>", JS_EVAL_TYPE_GLOBAL);
@@ -120,12 +163,16 @@ void JsEngine::reset() {
             int len=strlen(content.c_str());
             stream.printf("running program...\n");
             JSValue bootval=JS_Eval(ctx, content.c_str(), len, "<builtin>", JS_EVAL_TYPE_GLOBAL);
-            if (JS_IsException(bootval))
+            if (JS_IsException(bootval)) {
                 bootError=getExceptionMessage();
+                stream.printf("Boot error!\n");
+            }
 
             JS_FreeValue(ctx,bootval);
         }
     }
+
+    addGlobal("bootError",JS_DupValue(ctx,bootError));
 
     startCount++;
     stream.printf("Started, count=%d\n",startCount);
@@ -138,12 +185,15 @@ void JsEngine::loop() {
         begin();
     }
 
+    for (JsPlugin* p: plugins)
+        p->loop();
+
     if (reloadScheduled) {
         reloadScheduled=false;
         reset();
     }
 
-    if (!JS_IsUndefined(bootError)) {
+    /*if (!JS_IsUndefined(bootError)) {
         stream.println("boot error");
         const char *out=JS_ToCString(ctx,bootError);
         if (out) {
@@ -152,7 +202,7 @@ void JsEngine::loop() {
         }
 
         delay(1000);
-    }
+    }*/
 
     std::vector<JsEngineTimeout> expired;
     uint32_t now=millis();
