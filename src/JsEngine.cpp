@@ -1,7 +1,7 @@
 #include "JsEngine.h"
 
 extern const char boot_js[];
-extern const unsigned int boot_js_len;
+//extern const unsigned int boot_js_len;
 
 static JSValue JsEngine_functionTrampoline(JSContext *ctx, JSValueConst this_val,
 		int argc, JSValueConst *argv,
@@ -39,10 +39,10 @@ void JsEngine::close() {
     for (auto *f : funcs) delete f;
     funcs.clear();
 
-    for (auto t: timeouts)
+    for (auto t: timers)
         JS_FreeValue(ctx,t.func);
 
-    timeouts.clear();
+    timers.clear();
 
     JS_FreeValue(ctx, serialDataFunc);
     JS_FreeValue(ctx, bootError);
@@ -125,15 +125,18 @@ void JsEngine::reset() {
     if (!rt)
         rt=JS_NewRuntime();
 
+    resourceCount=0;
     serialDataFunc=JS_UNDEFINED;
 
     ctx=JS_NewContext(rt);
     JS_SetContextOpaque(ctx,this);
+    maintenanceDeadline=millis();
 
     addGlobal("digitalWrite",newMethod(this,&JsEngine::digitalWrite,2));
+    addGlobal("digitalRead",newMethod(this,&JsEngine::digitalRead,1));
     addGlobal("serialWrite",newMethod(this,&JsEngine::serialWrite,1));
     addGlobal("setTimeout",newMethod(this,&JsEngine::setTimeout,2));
-    //addGlobal("setInterval",newMethod(this,&JsEngine::setInterval,2));
+    addGlobal("setInterval",newMethod(this,&JsEngine::setInterval,2));
     addGlobal("setSerialDataFunc",newMethod(this,&JsEngine::setSerialDataFunc,1));
     addGlobal("fileOpen",newMethod(this,&JsEngine::fileOpen,2));
     addGlobal("fileClose",newMethod(this,&JsEngine::fileClose,1));
@@ -148,7 +151,7 @@ void JsEngine::reset() {
         p->init();
 
     bootError=JS_UNDEFINED;
-    JSValue val=JS_Eval(ctx, boot_js, boot_js_len, "<builtin>", JS_EVAL_TYPE_GLOBAL);
+    JSValue val=JS_Eval(ctx, boot_js, strlen(boot_js), "<builtin>", JS_EVAL_TYPE_GLOBAL);
     if (JS_IsException(val))
         bootError=getExceptionMessage();
 
@@ -179,6 +182,37 @@ void JsEngine::reset() {
     stream.printf("{\"type\": \"started\"}\n",startCount);
 }
 
+void JsEngine::printJsValue(JSValue val) {
+    const char *out=JS_ToCString(ctx,val);
+    if (out) {
+        stream.println(out);
+        JS_FreeCString(ctx, out);
+    }
+
+    else {
+        stream.println("<unknown>");
+    }
+}
+
+void JsEngine::pumpJobs() {
+    JSContext *tmpctx=ctx;
+    int ret=1;
+
+    while (ret>0) {
+        ret=JS_ExecutePendingJob(rt, &tmpctx);
+        if (ret<0) {
+            JSValue ex=JS_GetException(tmpctx);
+            const char *s=JS_ToCString(tmpctx, ex);
+            if (s) {
+                Serial.printf("Unhandled promise rejection: %s\n",s);
+                JS_FreeCString(tmpctx,s);
+            }
+            JS_FreeValue(tmpctx,ex);
+            break;
+        }
+    }
+}
+
 void JsEngine::loop() {
     if (!began) {
         began=true;
@@ -193,35 +227,53 @@ void JsEngine::loop() {
         reset();
     }
 
-    /*if (!JS_IsUndefined(bootError)) {
-        stream.println("boot error");
-        const char *out=JS_ToCString(ctx,bootError);
-        if (out) {
-            stream.println(out);
-            JS_FreeCString(ctx, out);
-        }
+    pumpJobs();
 
-        delay(1000);
-    }*/
-
-    std::vector<JsEngineTimeout> expired;
     uint32_t now=millis();
+    if (now>maintenanceDeadline) {
+        //Serial.printf("maintenance...\n");
+        maintenanceDeadline=now+1000;
 
-    for (auto it=timeouts.begin(); it!=timeouts.end();) {
+        JS_RunGC(rt);
+
+        if (!JS_IsUndefined(bootError)) {
+            stream.println("**** BOOT ERROR ****");
+            printJsValue(bootError);
+        }
+    }
+
+    std::vector<JsEngineTimer> expired;
+    for (auto it=timers.begin(); it!=timers.end();) {
         if (now>=it->deadline) {
             expired.push_back(*it);
-            it=timeouts.erase(it);
+            if (it->interval) {
+                it->deadline=now+it->interval;
+                it++;
+            }
+
+            else {
+                it=timers.erase(it);
+            }
         }
 
         else {
-            ++it;
+            it++;
         }
     }
 
     for (auto &t: expired) {
-        JSValue ret=JS_Call(ctx,t.func,JS_UNDEFINED,0,nullptr);
-        JS_FreeValue(ctx,ret);
-        JS_FreeValue(ctx,t.func);
+        JSValue val=JS_Call(ctx,t.func,JS_UNDEFINED,0,nullptr);
+        if (JS_IsException(val)) {
+            JSValue err=getExceptionMessage();
+            printJsValue(err);
+            JS_FreeValue(ctx,err);
+        }
+
+        JS_FreeValue(ctx,val);
+
+        if (!t.interval) {
+            JS_FreeValue(ctx,t.func);
+        }
     }
 
     int len=stream.available();
@@ -272,6 +324,15 @@ JSValue JsEngine::setSerialDataFunc(int argc, JSValueConst *argv) {
     return JS_UNDEFINED;
 }
 
+JSValue JsEngine::digitalRead(int argc, JSValueConst *argv) {
+    int32_t pin=0,val;
+
+    JS_ToInt32(ctx,&pin,argv[0]);
+    val=::digitalRead(pin);
+
+    return JS_NewUint32(ctx,val);
+}
+
 JSValue JsEngine::digitalWrite(int argc, JSValueConst *argv) {
     int32_t pin=0, val=0;
 
@@ -287,11 +348,28 @@ JSValue JsEngine::setTimeout(int argc, JSValueConst *argv) {
     uint32_t until;
     JS_ToUint32(ctx,&until,argv[1]);
 
-    JsEngineTimeout t;
-    t.id=1;
+    resourceCount++;
+    JsEngineTimer t;
+    t.id=resourceCount;
     t.deadline=millis()+until;
     t.func=JS_DupValue(ctx, argv[0]);
-    timeouts.push_back(t);
+    t.interval=0;
+    timers.push_back(t);
+
+    return JS_NewUint32(ctx,t.id);
+}
+
+JSValue JsEngine::setInterval(int argc, JSValueConst *argv) {
+    uint32_t interval;
+    JS_ToUint32(ctx,&interval,argv[1]);
+
+    resourceCount++;
+    JsEngineTimer t;
+    t.id=resourceCount;
+    t.deadline=millis()+interval;
+    t.func=JS_DupValue(ctx, argv[0]);
+    t.interval=interval;
+    timers.push_back(t);
 
     return JS_NewUint32(ctx,t.id);
 }
@@ -304,8 +382,9 @@ JSValue JsEngine::fileOpen(int argc, JSValueConst *argv) {
     if (!f)
         return JS_ThrowInternalError(ctx, "failed to open file");
 
+    resourceCount++;
     JsFile jsf;
-    jsf.id=1;
+    jsf.id=resourceCount;
     jsf.file=f;
     files.push_back(jsf);
 

@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build:boot": "esbuild --bundle --conditions=mcu --outfile=target/boot.js api/boot.js && xxd -i -n boot_js target/boot.js > src/boot_js.c",
+    "build:boot": "./scripts/generate-boot.js",
     "lab": "pnpm build:boot && pio run --target=upload"
   },
   "bin": {

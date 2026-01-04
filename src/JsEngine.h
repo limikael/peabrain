@@ -34,10 +34,11 @@ struct JsCString {
     const char *c_str() { return str; }
 };
 
-class JsEngineTimeout {
+class JsEngineTimer {
 public:
 	uint32_t id;
 	uint32_t deadline;
+	uint32_t interval;
 	JSValue func;
 };
 
@@ -67,10 +68,14 @@ public:
 	void addPlugin(JsPlugin *plugin);
 	JSContext* getContext() { return ctx; } 
 	Stream* getStream() { return &stream; }
+	JSValue getExceptionMessage();
+	void printJsValue(JSValue val);
 
 private:
 	JSValue digitalWrite(int argc, JSValueConst *argv);
+	JSValue digitalRead(int argc, JSValueConst *argv);
 	JSValue setTimeout(int argc, JSValueConst *argv);
+	JSValue setInterval(int argc, JSValueConst *argv);
 	JSValue consoleLog(int argc, JSValueConst *argv);
 	JSValue serialWrite(int argc, JSValueConst *argv);
 	JSValue setSerialDataFunc(int argc, JSValueConst *argv);
@@ -79,13 +84,13 @@ private:
 	JSValue fileRead(int argc, JSValueConst *argv);
 	JSValue fileWrite(int argc, JSValueConst *argv);
 	JSValue scheduleReload(int argc, JSValueConst *argv);
-	JSValue getExceptionMessage();
+	void pumpJobs();
 	void reset();
 	void close();
 	JSRuntime *rt=nullptr;
 	JSContext *ctx=nullptr;
 	Stream& stream;
-	std::vector<JsEngineTimeout> timeouts;
+	std::vector<JsEngineTimer> timers;
 	std::vector<JsFile> files;
 	std::vector<JsPlugin*> plugins;
 	JSValue serialDataFunc;
@@ -93,4 +98,6 @@ private:
 	bool reloadScheduled,began=false;
 	int startCount=0;
 	std::vector<JSFunctionWrapper*> funcs;
+	uint32_t maintenanceDeadline;
+	uint32_t resourceCount;
 };

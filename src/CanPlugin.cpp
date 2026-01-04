@@ -43,6 +43,12 @@ void CanPlugin::loop() {
         args[0]=JS_NewString(ctx,s);
         JSValue ret=JS_Call(ctx,canMessageFunc,JS_UNDEFINED,1,args);
         JS_FreeValue(ctx,args[0]);
+        if (JS_IsException(ret)) {
+            JSValue err=jsEngine->getExceptionMessage();
+            jsEngine->printJsValue(err);
+            JS_FreeValue(ctx,err);
+        }
+
         JS_FreeValue(ctx,ret);
     }
 }
@@ -59,9 +65,11 @@ JSValue CanPlugin::canWrite(int argc, JSValueConst *argv) {
 
     cof_t frame;
     if (cof_from_slcan(&frame,s)) {
-        jsEngine->getStream()->printf("can write: %s\n",s);
+        //jsEngine->getStream()->printf("can write: %s\n",s);
         espBus.write(&frame);
     }
+
+    JS_FreeCString(jsEngine->getContext(),s);
 
     return JS_UNDEFINED;
 }

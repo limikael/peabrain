@@ -27,7 +27,7 @@ export default class Repl extends EventEmitter {
 
     handleLine(line) {
         try {
-            let res=eval(line);
+            let res=global.eval(line);
             this.serial.write(String(res));
             this.serial.write("\n");
         }

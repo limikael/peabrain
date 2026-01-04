@@ -1,6 +1,7 @@
 import EventEmitter from "./EventEmitter.js";
 import Repl from "./Repl.js";
-//import {slcanStringify} from "canopener";
+import {slcanStringify, slcanParse} from "canopener";
+import * as CO from "canopener";
 
 global.EventEmitter=EventEmitter;
 
@@ -38,15 +39,15 @@ repl.on("message",message=>{
 
 global.canBus=new EventEmitter();
 global.canBus.write=message=>{
-	//let s=slcanStringify(message);
-	console.log("writing can: "+JSON.stringify(message));
-	//canWrite(s);
-	//console.log(JSON.stringify(message));
+	let s=slcanStringify(message);
+	//console.log("writing can: "+s);
+	canWrite(s);
+	//console.log("writing can: "+s);//JSON.stringify(message));
 }
 
 global.canBus.send=global.canBus.write;
 
 setCanMessageFunc(message=>{
-	console.log("can message: "+message);
-	//global.canBus.emit("message",message);
+	global.canBus.emit("message",slcanParse(message));
+	//console.log("can message: "+message);
 });

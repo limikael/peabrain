@@ -1,22 +1,20 @@
-/*import {RemoteDevice, MasterDevice} from "canopener";
+import {RemoteDevice, MasterDevice} from "canopener";
 
-let master=new MasterDevice({bus: global.canBus});*/
-/*let dev=new RemoteDevice({nodeId: 7});
+global.master=new MasterDevice({bus: global.canBus});
+let dev=new RemoteDevice({nodeId: 5});
 dev.on("stateChange",()=>{
 	console.log("device state: "+dev.getState());
 });
 
 master.addDevice(dev);
 
-let blink=dev.entry(0x2000,0).setType("bool");*/
+let blink=dev.entry(0x2000,0).setType("bool");
 
-function tick() {
-	let t=setTimeout(tick,1000);
-	console.log("timeout tick, t="+t);
+async function tick() {
+	console.log("timeout...");
+	digitalWrite(8,!digitalRead(8));
+	await blink.set(!blink.get());
+	setTimeout(tick,1000);
 }
 
 tick();
-
-/*setInterval(()=>{
-	console.log("timeout tick...");
-},1000);*/

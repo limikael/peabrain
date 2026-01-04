@@ -18,7 +18,7 @@ program
     .action(async (file, options) => {
         try {
             console.log(`Deploy: ${file}`);
-            const result = await esbuild.build({
+            const result = await esbuild.build({ // entryPoints instead...
                 stdin: {
                     contents: fs.readFileSync(file, 'utf8'),
                     sourcefile: file,
