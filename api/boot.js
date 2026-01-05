@@ -1,9 +1,11 @@
-import EventEmitter from "./EventEmitter.js";
 import Repl from "./Repl.js";
-import {slcanStringify, slcanParse} from "canopener";
+import {EventEmitter, slcanStringify, slcanParse, RemoteDevice, MasterDevice, awaitEvent} from "canopener";
 import * as CO from "canopener";
 
+global.awaitEvent=awaitEvent;
 global.EventEmitter=EventEmitter;
+global.RemoteDevice=RemoteDevice;
+global.MasterDevice=MasterDevice;
 
 global.serial=new EventEmitter();
 serial.write=data=>serialWrite(data);

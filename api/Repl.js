@@ -1,4 +1,4 @@
-import EventEmitter from "./EventEmitter.js";
+import {EventEmitter} from "canopener";
 import {safeJsonParse} from "./js-util.js";
 
 export default class Repl extends EventEmitter {

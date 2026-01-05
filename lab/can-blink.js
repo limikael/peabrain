@@ -1,6 +1,6 @@
 import {RemoteDevice, MasterDevice} from "canopener";
 
-global.master=new MasterDevice({bus: global.canBus});
+let master=new MasterDevice({bus: global.canBus});
 let dev=new RemoteDevice({nodeId: 5});
 dev.on("stateChange",()=>{
 	console.log("device state: "+dev.getState());

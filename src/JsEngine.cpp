@@ -159,7 +159,7 @@ void JsEngine::reset() {
 
     JS_FreeValue(ctx, val);
 
-    if (JS_IsUndefined(bootError)) {
+    if (JS_IsUndefined(bootError) && runEnabled) {
         File f = SPIFFS.open("/boot.js", FILE_READ);
         if (f) {
             String content = f.readString();
@@ -234,7 +234,7 @@ void JsEngine::loop() {
     uint32_t now=millis();
     if (now>maintenanceDeadline) {
         //Serial.printf("maintenance...\n");
-        maintenanceDeadline=now+1000;
+        maintenanceDeadline=now+100;
 
         JS_RunGC(rt);
 
@@ -460,7 +460,14 @@ JSValue JsEngine::fileClose(int argc, JSValueConst *argv) {
 }
 
 JSValue JsEngine::scheduleReload(int argc, JSValueConst *argv) {
-    stream.printf("Schedule reload...\n");
+    uint32_t startParam;
+    JS_ToUint32(ctx,&startParam,argv[0]);
+
+    if (JS_IsUndefined(argv[0]))
+        startParam=1;
+
+    stream.printf("Schedule reload, start=%d\n",startParam);
+    runEnabled=startParam;
     reloadScheduled=true;
     return JS_UNDEFINED;
 }

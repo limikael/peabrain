@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build:boot": "./scripts/generate-boot.js",
-    "lab": "pnpm build:boot && pio run --target=upload"
+    "flash": "pnpm build:boot && pio run --target=upload"
   },
   "bin": {
     "peabrain": "api/peabrain.js"

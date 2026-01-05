@@ -101,4 +101,5 @@ private:
 	std::vector<JSFunctionWrapper*> funcs;
 	uint32_t maintenanceDeadline;
 	uint32_t resourceCount;
+	bool runEnabled=true;
 };
