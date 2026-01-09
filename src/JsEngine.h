@@ -85,6 +85,8 @@ private:
 	JSValue fileRead(int argc, JSValueConst *argv);
 	JSValue fileWrite(int argc, JSValueConst *argv);
 	JSValue scheduleReload(int argc, JSValueConst *argv);
+	JSValue garbageCollect(int argc, JSValueConst *argv);
+	JSValue setBootInProgress(int argc, JSValueConst *argv);
 	void pumpJobs();
 	void reset();
 	void close();
@@ -102,4 +104,5 @@ private:
 	uint32_t maintenanceDeadline;
 	uint32_t resourceCount;
 	bool runEnabled=true;
+	bool bootInProgress=false;
 };

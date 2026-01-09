@@ -25,7 +25,10 @@ export default class Device extends EventEmitter {
         return;
       }
 
-      //console.log(msg);
+      if (!msg) {
+        console.log(line);
+        return;
+      }
 
       if (!msg.id) {
         this.emit("message",msg);

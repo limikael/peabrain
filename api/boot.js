@@ -59,3 +59,18 @@ setCanMessageFunc(message=>{
 	global.canBus.emit("message",{id, data});//slcanParse(message));
 	//console.log("can message: "+message);
 });*/
+
+global.waitFor=async (p)=>{
+	if (typeof p=="function")
+		p=p();
+
+	global.gc();
+	setBootInProgress(true);
+	global.gc();
+
+	await p;
+
+	global.gc();
+	setBootInProgress(false);
+	global.gc();
+}

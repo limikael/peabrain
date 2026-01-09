@@ -145,6 +145,8 @@ void JsEngine::reset() {
     addGlobal("fileRead",newMethod(this,&JsEngine::fileRead,1));
     addGlobal("fileWrite",newMethod(this,&JsEngine::fileWrite,1));
     addGlobal("scheduleReload",newMethod(this,&JsEngine::scheduleReload,1));
+    addGlobal("setBootInProgress",newMethod(this,&JsEngine::setBootInProgress,1));
+    addGlobal("gc",newMethod(this,&JsEngine::garbageCollect,0));
 
     JSValue global=JS_GetGlobalObject(ctx);
     addGlobal("global",global);
@@ -152,6 +154,7 @@ void JsEngine::reset() {
     for (JsPlugin* p: plugins)
         p->init();
 
+    bootInProgress=false;
     bootError=JS_UNDEFINED;
     JSValue val=JS_Eval(ctx, boot_js, strlen(boot_js), "<builtin>", JS_EVAL_TYPE_GLOBAL);
     if (JS_IsException(val))
@@ -172,6 +175,7 @@ void JsEngine::reset() {
             if (JS_IsException(bootval)) {
                 bootError=getExceptionMessage();
                 stream.printf("Boot error!\n");
+                printJsValue(bootError);
             }
 
             JS_FreeValue(ctx,bootval);
@@ -184,7 +188,9 @@ void JsEngine::reset() {
 
     startCount++;
     stream.printf("Started, count=%d\n",startCount);
-    stream.printf("{\"type\": \"started\"}\n",startCount);
+
+    if (!bootInProgress)
+        stream.printf("{\"type\": \"started\"}\n",startCount);
 }
 
 void JsEngine::printJsValue(JSValue val) {
@@ -241,10 +247,10 @@ void JsEngine::loop() {
 
         JS_RunGC(rt);
 
-        if (!JS_IsUndefined(bootError)) {
+        /*if (!JS_IsUndefined(bootError)) {
             stream.println("**** BOOT ERROR ****");
             printJsValue(bootError);
-        }
+        }*/
     }
 
     std::vector<JsEngineTimer> expired;
@@ -306,6 +312,28 @@ void JsEngine::loop() {
         JS_FreeValue(ctx,args[0]);
         JS_FreeValue(ctx,ret);
     }
+}
+
+JSValue JsEngine::garbageCollect(int argc, JSValueConst *argv) {
+
+    JSMemoryUsage before, after;
+
+    JS_ComputeMemoryUsage(rt, &before);
+
+    JS_RunGC(rt);
+
+    JS_ComputeMemoryUsage(rt, &after);
+
+    int64_t freed = before.memory_used_size - after.memory_used_size;
+
+    //printf("Garbage collected: %d\n",freed);
+
+    if (freed < 0)
+        freed = 0; // GC can trigger allocations internally
+
+    return JS_NewInt64(ctx, freed);
+
+    return JS_UNDEFINED;
 }
 
 JSValue JsEngine::serialWrite(int argc, JSValueConst *argv) {
@@ -472,5 +500,20 @@ JSValue JsEngine::scheduleReload(int argc, JSValueConst *argv) {
     stream.printf("Schedule reload, start=%d\n",startParam);
     runEnabled=startParam;
     reloadScheduled=true;
+    return JS_UNDEFINED;
+}
+
+JSValue JsEngine::setBootInProgress(int argc, JSValueConst *argv) {
+    uint32_t bootInProgressParam;
+    JS_ToUint32(ctx,&bootInProgressParam,argv[0]);
+
+    if (!bootInProgressParam && bootInProgress)
+        stream.printf("{\"type\": \"started\"}\n",startCount);
+
+    bootInProgress=bootInProgressParam;
+
+    /*stream.printf("Schedule reload, start=%d\n",startParam);
+    runEnabled=startParam;
+    reloadScheduled=true;*/
     return JS_UNDEFINED;
 }
