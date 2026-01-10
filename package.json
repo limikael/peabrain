@@ -16,10 +16,11 @@
   "license": "ISC",
   "packageManager": "pnpm@10.12.1",
   "dependencies": {
-    "canopener": "link:../../Repo/canopener",
-    "esbuild": "^0.27.2",
     "@serialport/parser-readline": "^13.0.0",
+    "canopener": "link:../../Repo/canopener",
     "commander": "^14.0.2",
+    "esbuild": "^0.27.2",
+    "json5": "^2.2.3",
     "serialport": "^13.0.0"
   }
 }

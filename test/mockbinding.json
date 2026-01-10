@@ -1,0 +1,31 @@
+{
+	"include": ["mockapi.h"],
+	"exports": [
+		{
+			"name": "helloint",
+			"return": "int",
+			"type": "function"
+		},
+
+		{
+			"name": "hellovoid",
+			"return": "void",
+			"type": "function"
+		},
+
+		{
+			"name": "helloinc",
+			"args": [
+				{"type": "int"}
+			],
+			"return": "int",
+			"type": "function"
+
+		}/*,
+
+		{
+			"name": "hellostr",
+			"return": {"type": "string"}
+		}*/
+	]
+}

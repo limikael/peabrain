@@ -5,3 +5,4 @@ node_modules
 ext
 pnpm-lock.yaml
 src/boot_js.c
+bin
