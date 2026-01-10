@@ -1,3 +1,5 @@
+#include "mockapi.h"
+
 int helloint() {
 	return 123;
 }
@@ -10,3 +12,6 @@ void hellovoid() {
 
 }
 
+std::string concat(std::string a, std::string b) {
+	return a+b;
+}

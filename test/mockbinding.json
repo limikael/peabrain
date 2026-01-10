@@ -15,17 +15,17 @@
 
 		{
 			"name": "helloinc",
-			"args": [
-				{"type": "int"}
-			],
+			"args": ["int"],
 			"return": "int",
 			"type": "function"
 
-		}/*,
+		},
 
 		{
-			"name": "hellostr",
-			"return": {"type": "string"}
-		}*/
+			"type": "function",
+			"name": "concat",
+			"args": ["string","string"],
+			"return": "string"
+		}
 	]
 }

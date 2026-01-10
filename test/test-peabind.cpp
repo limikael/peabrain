@@ -19,7 +19,15 @@ void test_peabind() {
         let a=helloint(); \
         let b=helloinc(1); \
         hellovoid(); \
-        [a,b]; \
+        let s=concat('xx','yy'); \
+        let caught='none'; \
+        try { \
+            let s2=concat('xx'); \
+        } \
+        catch (e) { \
+            caught=e.message; \
+        } \
+        [a,b,s,caught]; \
     ";
 
     JSValue result=JS_Eval(ctx,
@@ -33,7 +41,7 @@ void test_peabind() {
 
     const char *res = JS_ToCString(ctx, result);
     printf("out: %s\n",res);
-    assert(!strcmp("123,2",res));
+    assert(!strcmp("123,2,xxyy,wrong arg count",res));
 
     JS_FreeValue(ctx,result);
     JS_FreeContext(ctx);
