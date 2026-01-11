@@ -5,6 +5,7 @@ void test_canopener();
 void test_peabind();
 void test_peabind_classes();
 void test_peabind_references();
+void test_peabind_borrowed_references();
 
 int main() {
 	printf("Running tests...\n");
@@ -14,6 +15,7 @@ int main() {
 	test_peabind();
 	test_peabind_classes();
 	test_peabind_references();
+	test_peabind_borrowed_references();
 
 	return 0;
 }

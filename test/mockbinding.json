@@ -56,5 +56,16 @@
 			"return": "int",
 			"type": "function"
 		},
+
+		{
+			"name": "AnotherTest",
+			"type": "class",
+			"methods": [
+				{
+					"name": "getTestClass",
+					"return": "TestClass"
+				},
+			]
+		}
 	]
 }

@@ -83,10 +83,6 @@ class Declaration {
                 return `
                     ${this.name}=(${decl.name}*)JS_GetOpaque(${jsValueExpr},${this.binding.prefix}${decl.name}_classid);
                 `;
-
-                //instance=(${this.class.name}*)JS_GetOpaque(thisobj,${this.binding.prefix}${this.class.name}_classid);
-
-                //throw new Error("Can't unpack this type: "+this.type);
         }
     }
 

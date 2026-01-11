@@ -97,6 +97,31 @@ static JSValue pea_getTestClassValue(JSContext *ctx, JSValueConst thisobj, int a
     retval=JS_NewUint32(ctx,ret);
     return retval;
 }
+static JSClassID pea_AnotherTest_classid=0;
+static JSValue pea_AnotherTest_ctor(JSContext *ctx, JSValueConst new_target, int argc, JSValueConst *argv) {
+    if (argc!=0) return JS_ThrowTypeError(ctx, "wrong arg count");
+    AnotherTest* instance=new AnotherTest();
+    //JSValue proto=JS_GetClassProto(ctx,pea_AnotherTest_classid);
+    //JSValue obj=JS_NewObjectProtoClass(ctx,proto,pea_AnotherTest_classid);
+    //JS_FreeValue(ctx, proto);
+    JSValue obj=JS_NewObjectClass(ctx,pea_AnotherTest_classid);
+    JS_SetOpaque(obj,instance);
+    return obj;
+}
+static void pea_AnotherTest_finalizer(JSRuntime *rt, JSValue obj) {
+    AnotherTest* instance=(AnotherTest*)JS_GetOpaque(obj,pea_AnotherTest_classid);
+    delete instance;
+}
+static JSValue pea_AnotherTest_getTestClass(JSContext *ctx, JSValueConst thisobj, int argc, JSValueConst *argv) {
+    if (argc!=0) return JS_ThrowTypeError(ctx, "wrong arg count");
+    AnotherTest* instance=(AnotherTest*)JS_GetOpaque(thisobj,pea_AnotherTest_classid);
+    TestClass* ret;
+    ret=instance->getTestClass();
+    JSValue retval=JS_UNDEFINED;
+    retval=JS_NewObjectClass(ctx,pea_TestClass_classid);
+    JS_SetOpaque(retval,ret);
+    return retval;
+}
 void pea_init(JSContext *ctx) {
     JSValue global=JS_GetGlobalObject(ctx);
     JS_SetPropertyStr(ctx,global,"helloint",JS_NewCFunction(ctx,pea_helloint,"helloint",0));
@@ -115,5 +140,14 @@ void pea_init(JSContext *ctx) {
     JS_SetPropertyStr(ctx,TestClass_proto,"setVal",JS_NewCFunction(ctx, pea_TestClass_setVal,"setVal",0));
     JS_SetPropertyStr(ctx,global,"createTestClass",JS_NewCFunction(ctx,pea_createTestClass,"createTestClass",0));
     JS_SetPropertyStr(ctx,global,"getTestClassValue",JS_NewCFunction(ctx,pea_getTestClassValue,"getTestClassValue",0));
+    if (!pea_AnotherTest_classid) JS_NewClassID(&pea_AnotherTest_classid);
+    JSClassDef AnotherTest_def={.class_name="AnotherTest", .finalizer=pea_AnotherTest_finalizer};
+    JS_NewClass(JS_GetRuntime(ctx),pea_AnotherTest_classid,&AnotherTest_def);
+    JSValue AnotherTest_proto=JS_NewObject(ctx);
+    JS_SetClassProto(ctx, pea_AnotherTest_classid,AnotherTest_proto);
+    JSValue AnotherTest_ctorval=JS_NewCFunction2(ctx,pea_AnotherTest_ctor,"AnotherTest",0,JS_CFUNC_constructor,0);
+    JS_SetConstructor(ctx,AnotherTest_ctorval,AnotherTest_proto);
+    JS_SetPropertyStr(ctx,global,"AnotherTest",AnotherTest_ctorval);
+    JS_SetPropertyStr(ctx,AnotherTest_proto,"getTestClass",JS_NewCFunction(ctx, pea_AnotherTest_getTestClass,"getTestClass",0));
     JS_FreeValue(ctx,global);
 }

@@ -103,3 +103,21 @@ void test_peabind_references() {
     JS_FreeRuntime(rt);
 }
 
+void test_peabind_borrowed_references() {
+    printf("- Peabind can use borrowed refs...\n");
+
+    JSRuntime *rt = JS_NewRuntime();
+    JSContext *ctx = JS_NewContext(rt);
+
+    pea_init(ctx);
+    std::string res=runcode(ctx,"\
+        let t=new AnotherTest(); \
+        let v=t.getTestClass().getVal(); \
+        [v]; \
+    ");
+
+    assert(res=="789");
+
+    JS_FreeContext(ctx);
+    JS_FreeRuntime(rt);
+}
