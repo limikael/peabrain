@@ -77,6 +77,7 @@ void test_peabind_classes() {
         ['a',v,u]; \
     ");
 
+    printf("ret: %s\n",res.c_str());
     assert(res=="a,5,123");
 
     JS_FreeContext(ctx);

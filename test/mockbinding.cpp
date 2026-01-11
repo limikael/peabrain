@@ -2,6 +2,17 @@ extern "C" {
     #include "quickjs.h"
 }
 #include <string>
+#include <cstdlib>
+typedef struct {
+    void *instance;
+    bool owned;
+} pea_opaque_t;
+pea_opaque_t* pea_opaque_create(void *instance, bool owned) {
+    pea_opaque_t* opaque=(pea_opaque_t*)malloc(sizeof(pea_opaque_t));
+    opaque->instance=instance;
+    opaque->owned=owned;
+    return opaque;
+}
 #include "mockapi.h"
 static JSValue pea_helloint(JSContext *ctx, JSValueConst thisobj, int argc, JSValueConst *argv) {
     if (argc!=0) return JS_ThrowTypeError(ctx, "wrong arg count");
@@ -52,16 +63,24 @@ static JSValue pea_TestClass_ctor(JSContext *ctx, JSValueConst new_target, int a
     //JSValue obj=JS_NewObjectProtoClass(ctx,proto,pea_TestClass_classid);
     //JS_FreeValue(ctx, proto);
     JSValue obj=JS_NewObjectClass(ctx,pea_TestClass_classid);
-    JS_SetOpaque(obj,instance);
+    JS_SetOpaque(obj,pea_opaque_create(instance,true));
     return obj;
 }
 static void pea_TestClass_finalizer(JSRuntime *rt, JSValue obj) {
-    TestClass* instance=(TestClass*)JS_GetOpaque(obj,pea_TestClass_classid);
-    delete instance;
+    //TestClass* instance=(TestClass*)JS_GetOpaque(obj,pea_TestClass_classid);
+    //delete instance;
+    pea_opaque_t* opaque=(pea_opaque_t*)JS_GetOpaque(obj,pea_TestClass_classid);
+    if (opaque->owned) {
+        TestClass* instance=(TestClass*)opaque->instance;
+        delete instance;
+    }
+    free(opaque);
 }
 static JSValue pea_TestClass_getVal(JSContext *ctx, JSValueConst thisobj, int argc, JSValueConst *argv) {
     if (argc!=0) return JS_ThrowTypeError(ctx, "wrong arg count");
-    TestClass* instance=(TestClass*)JS_GetOpaque(thisobj,pea_TestClass_classid);
+    pea_opaque_t* opaque=(pea_opaque_t*)JS_GetOpaque(thisobj,pea_TestClass_classid);
+    //TestClass* instance=(TestClass*)JS_GetOpaque(thisobj,pea_TestClass_classid);
+    TestClass* instance=(TestClass*)opaque->instance;
     int ret;
     ret=instance->getVal();
     JSValue retval=JS_UNDEFINED;
@@ -72,7 +91,9 @@ static JSValue pea_TestClass_setVal(JSContext *ctx, JSValueConst thisobj, int ar
     if (argc!=1) return JS_ThrowTypeError(ctx, "wrong arg count");
     int arg_0;
     JS_ToInt32(ctx,&arg_0,argv[0]);
-    TestClass* instance=(TestClass*)JS_GetOpaque(thisobj,pea_TestClass_classid);
+    pea_opaque_t* opaque=(pea_opaque_t*)JS_GetOpaque(thisobj,pea_TestClass_classid);
+    //TestClass* instance=(TestClass*)JS_GetOpaque(thisobj,pea_TestClass_classid);
+    TestClass* instance=(TestClass*)opaque->instance;
     instance->setVal(arg_0);
     return JS_UNDEFINED;
 }
@@ -84,13 +105,16 @@ static JSValue pea_createTestClass(JSContext *ctx, JSValueConst thisobj, int arg
     ret=createTestClass(arg_0);
     JSValue retval=JS_UNDEFINED;
     retval=JS_NewObjectClass(ctx,pea_TestClass_classid);
-    JS_SetOpaque(retval,ret);
+    JS_SetOpaque(retval,pea_opaque_create(ret,true));
     return retval;
 }
 static JSValue pea_getTestClassValue(JSContext *ctx, JSValueConst thisobj, int argc, JSValueConst *argv) {
     if (argc!=1) return JS_ThrowTypeError(ctx, "wrong arg count");
     TestClass* arg_0;
-    arg_0=(TestClass*)JS_GetOpaque(argv[0],pea_TestClass_classid);
+    // FIX FIX FIX
+    //arg_0=(TestClass*)JS_GetOpaque(argv[0],pea_TestClass_classid);
+    pea_opaque_t* opaque=(pea_opaque_t*)JS_GetOpaque(argv[0],pea_TestClass_classid);
+    arg_0=(TestClass*)opaque->instance;
     int ret;
     ret=getTestClassValue(arg_0);
     JSValue retval=JS_UNDEFINED;
@@ -105,21 +129,29 @@ static JSValue pea_AnotherTest_ctor(JSContext *ctx, JSValueConst new_target, int
     //JSValue obj=JS_NewObjectProtoClass(ctx,proto,pea_AnotherTest_classid);
     //JS_FreeValue(ctx, proto);
     JSValue obj=JS_NewObjectClass(ctx,pea_AnotherTest_classid);
-    JS_SetOpaque(obj,instance);
+    JS_SetOpaque(obj,pea_opaque_create(instance,true));
     return obj;
 }
 static void pea_AnotherTest_finalizer(JSRuntime *rt, JSValue obj) {
-    AnotherTest* instance=(AnotherTest*)JS_GetOpaque(obj,pea_AnotherTest_classid);
-    delete instance;
+    //AnotherTest* instance=(AnotherTest*)JS_GetOpaque(obj,pea_AnotherTest_classid);
+    //delete instance;
+    pea_opaque_t* opaque=(pea_opaque_t*)JS_GetOpaque(obj,pea_AnotherTest_classid);
+    if (opaque->owned) {
+        AnotherTest* instance=(AnotherTest*)opaque->instance;
+        delete instance;
+    }
+    free(opaque);
 }
 static JSValue pea_AnotherTest_getTestClass(JSContext *ctx, JSValueConst thisobj, int argc, JSValueConst *argv) {
     if (argc!=0) return JS_ThrowTypeError(ctx, "wrong arg count");
-    AnotherTest* instance=(AnotherTest*)JS_GetOpaque(thisobj,pea_AnotherTest_classid);
+    pea_opaque_t* opaque=(pea_opaque_t*)JS_GetOpaque(thisobj,pea_AnotherTest_classid);
+    //AnotherTest* instance=(AnotherTest*)JS_GetOpaque(thisobj,pea_AnotherTest_classid);
+    AnotherTest* instance=(AnotherTest*)opaque->instance;
     TestClass* ret;
     ret=instance->getTestClass();
     JSValue retval=JS_UNDEFINED;
     retval=JS_NewObjectClass(ctx,pea_TestClass_classid);
-    JS_SetOpaque(retval,ret);
+    JS_SetOpaque(retval,pea_opaque_create(ret,false));
     return retval;
 }
 void pea_init(JSContext *ctx) {

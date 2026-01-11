@@ -81,7 +81,11 @@ class Declaration {
             default:
                 let decl=this.binding.getClassDeclarationByName(this.type);
                 return `
-                    ${this.name}=(${decl.name}*)JS_GetOpaque(${jsValueExpr},${this.binding.prefix}${decl.name}_classid);
+                    // FIX FIX FIX
+                    //${this.name}=(${decl.name}*)JS_GetOpaque(${jsValueExpr},${this.binding.prefix}${decl.name}_classid);
+
+                    ${this.binding.prefix}opaque_t* opaque=(${this.binding.prefix}opaque_t*)JS_GetOpaque(${jsValueExpr},${this.binding.prefix}${decl.name}_classid);
+                    ${this.name}=(${decl.name}*)opaque->instance;
                 `;
         }
     }
@@ -97,10 +101,22 @@ class Declaration {
 
             default:
                 let decl=this.binding.getClassDeclarationByName(this.type);
-                return `
-                    ${jsValueVar}=JS_NewObjectClass(ctx,${this.binding.prefix}${decl.name}_classid);
-                    JS_SetOpaque(${jsValueVar},${this.name});
-                `;
+                switch (this.ref) {
+                    case "owned_ptr":
+                        return `
+                            ${jsValueVar}=JS_NewObjectClass(ctx,${this.binding.prefix}${decl.name}_classid);
+                            JS_SetOpaque(${jsValueVar},${this.binding.prefix}opaque_create(${this.name},true));
+                        `;
+
+                    case "borrowed_ptr":
+                        return `
+                            ${jsValueVar}=JS_NewObjectClass(ctx,${this.binding.prefix}${decl.name}_classid);
+                            JS_SetOpaque(${jsValueVar},${this.binding.prefix}opaque_create(${this.name},false));
+                        `;
+
+                    default:
+                        throw new Error("unknown ref type: "+this.ref);
+                }
         }
     }
 
@@ -142,7 +158,9 @@ class Declaration {
                             ${this.args.map((a,i)=>a.genDecl()).join("\n")}
                             ${this.args.map((a,i)=>a.genUnpack(`argv[${i}]`)).join("\n")}
 
-                            ${this.class.name}* instance=(${this.class.name}*)JS_GetOpaque(thisobj,${this.binding.prefix}${this.class.name}_classid);
+                            ${this.binding.prefix}opaque_t* opaque=(${this.binding.prefix}opaque_t*)JS_GetOpaque(thisobj,${this.binding.prefix}${this.class.name}_classid);
+                            //${this.class.name}* instance=(${this.class.name}*)JS_GetOpaque(thisobj,${this.binding.prefix}${this.class.name}_classid);
+                            ${this.class.name}* instance=(${this.class.name}*)opaque->instance;
 
                             ${this.genFunctionCall()}
                         }
@@ -177,12 +195,19 @@ class Declaration {
                         //JSValue obj=JS_NewObjectProtoClass(ctx,proto,${this.binding.prefix}${this.name}_classid);
                         //JS_FreeValue(ctx, proto);
                         JSValue obj=JS_NewObjectClass(ctx,${this.binding.prefix}${this.name}_classid);
-                        JS_SetOpaque(obj,instance);
+                        JS_SetOpaque(obj,${this.binding.prefix}opaque_create(instance,true));
                         return obj;
                     }
                     static void ${this.binding.prefix}${this.name}_finalizer(JSRuntime *rt, JSValue obj) {
-                        ${this.name}* instance=(${this.name}*)JS_GetOpaque(obj,${this.binding.prefix}${this.name}_classid);
-                        delete instance;
+                        //${this.name}* instance=(${this.name}*)JS_GetOpaque(obj,${this.binding.prefix}${this.name}_classid);
+                        //delete instance;
+                        ${this.binding.prefix}opaque_t* opaque=(${this.binding.prefix}opaque_t*)JS_GetOpaque(obj,${this.binding.prefix}${this.name}_classid);
+                        if (opaque->owned) {
+                            ${this.name}* instance=(${this.name}*)opaque->instance;
+                            delete instance;
+                        }
+
+                        free(opaque);
                     }
                     ${this.methods.map(m=>m.getTopLevelDefinition()).join("\n")}
                 `;
@@ -309,6 +334,19 @@ export class Binding {
             }
 
             #include <string>
+            #include <cstdlib>
+
+            typedef struct {
+                void *instance;
+                bool owned;
+            } ${this.prefix}opaque_t;
+
+            ${this.prefix}opaque_t* ${this.prefix}opaque_create(void *instance, bool owned) {
+                ${this.prefix}opaque_t* opaque=(${this.prefix}opaque_t*)malloc(sizeof(${this.prefix}opaque_t));
+                opaque->instance=instance;
+                opaque->owned=owned;
+                return opaque;
+            }
 
             ${this.description.include.map(inc=>`#include "${inc}"`).join("\n")}
             ${this.exports.map(exp=>exp.getTopLevelDefinition()).join("\n")}

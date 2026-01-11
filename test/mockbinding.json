@@ -46,7 +46,7 @@
 		{
 			"name": "createTestClass",
 			"args": ["int"],
-			"return": "TestClass",
+			"return": {"type": "TestClass", "ref": "owned_ptr"},
 			"type": "function"
 		},
 
@@ -63,7 +63,7 @@
 			"methods": [
 				{
 					"name": "getTestClass",
-					"return": "TestClass"
+					"return": {"type": "TestClass", "ref": "borrowed_ptr"}
 				},
 			]
 		}
