@@ -59,7 +59,10 @@ void test_peabind_classes() {
 
     const char *code="\
         let t=new TestClass(); \
-        ['a']; \
+        let v=t.getVal(); \
+        t.setVal(123); \
+        let u=t.getVal(); \
+        ['a',v,u]; \
     ";
 
     JSValue result=JS_Eval(ctx,
@@ -69,11 +72,19 @@ void test_peabind_classes() {
         JS_EVAL_TYPE_GLOBAL
     );
 
+    if (JS_IsException(result)) {
+        JSValue ex=JS_GetException(ctx);
+        const char *msg = JS_ToCString(ctx, ex);
+        printf("exception: %s\n",msg);
+        JS_FreeCString(ctx, msg);
+        JS_FreeValue(ctx, ex);
+    }
+
     assert(!JS_IsException(result));
 
     const char *res = JS_ToCString(ctx, result);
     printf("out: %s\n",res);
-    assert(!strcmp("a",res));
+    assert(!strcmp("a,5,123",res));
 
     JS_FreeValue(ctx,result);
     JS_FreeContext(ctx);

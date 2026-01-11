@@ -30,7 +30,17 @@
 
 		{
 			"type": "class",
-			"name": "TestClass"
+			"name": "TestClass",
+			"methods": [
+				{
+					"name": "getVal",
+					"return": "int"
+				},
+				{
+					"name": "setVal",
+					"args": ["int"]
+				}
+			]
 		}
 	]
 }

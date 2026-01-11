@@ -32,6 +32,17 @@ class Declaration {
                 name: "ret"
             });
         }
+
+        if (this.type=="class") {
+            if (!this.methods)
+                this.methods=[];
+
+            this.methods=this.methods.map(m=>new Declaration(m,{
+                class: this,
+                binding: this.binding,
+                type: "function",
+            }));
+        }
     }
 
     genDecl() {
@@ -91,15 +102,19 @@ class Declaration {
         if (this.type!="function")
             throw new Error("Only functions supported at top level");
 
+        let name=this.name;
+        if (this.class)
+            name=`instance->${this.name}`;
+
         if (this.return.isVoid())
             return `
-                ${this.name}(${this.args.map(a=>a.name).join(",")});
+                ${name}(${this.args.map(a=>a.name).join(",")});
                 return JS_UNDEFINED;
             `;
 
         return `
             ${this.return.genDecl()}
-            ret=${this.name}(${this.args.map(a=>a.name).join(",")});
+            ret=${name}(${this.args.map(a=>a.name).join(",")});
             return ${this.return.genPack()};
         `;
     }
@@ -107,31 +122,52 @@ class Declaration {
     getTopLevelDefinition() {
         switch (this.type) {
             case "function":
-                return `
-                    static JSValue ${this.binding.prefix}${this.name}(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) {
-                        if (argc!=${this.args.length}) return JS_ThrowTypeError(ctx, "wrong arg count");
+                if (this.class) {
+                    return `
+                        static JSValue ${this.binding.prefix}${this.class.name}_${this.name}(JSContext *ctx, JSValueConst thisobj, int argc, JSValueConst *argv) {
+                            if (argc!=${this.args.length}) return JS_ThrowTypeError(ctx, "wrong arg count");
 
-                        ${this.args.map((a,i)=>a.genDecl()).join("\n")}
-                        ${this.args.map((a,i)=>a.genUnpack(`argv[${i}]`)).join("\n")}
+                            ${this.args.map((a,i)=>a.genDecl()).join("\n")}
+                            ${this.args.map((a,i)=>a.genUnpack(`argv[${i}]`)).join("\n")}
 
-                        ${this.genFunctionCall()}
-                    }
-                `
+                            ${this.class.name}* instance=(${this.class.name}*)JS_GetOpaque(thisobj,${this.binding.prefix}${this.class.name}_classid);
+
+                            ${this.genFunctionCall()}
+                        }
+                    `;
+                }
+
+                else {
+                    return `
+                        static JSValue ${this.binding.prefix}${this.name}(JSContext *ctx, JSValueConst thisobj, int argc, JSValueConst *argv) {
+                            if (argc!=${this.args.length}) return JS_ThrowTypeError(ctx, "wrong arg count");
+
+                            ${this.args.map((a,i)=>a.genDecl()).join("\n")}
+                            ${this.args.map((a,i)=>a.genUnpack(`argv[${i}]`)).join("\n")}
+
+                            ${this.genFunctionCall()}
+                        }
+                    `;
+                }
                 break;
 
             case "class":
                 return `
-                    static JSClassID ${this.name}_classid=0;
-                    static JSValue ${this.name}_ctor(JSContext *ctx, JSValueConst new_target, int argc, JSValueConst *argv) {
+                    static JSClassID ${this.binding.prefix}${this.name}_classid=0;
+                    static JSValue ${this.binding.prefix}${this.name}_ctor(JSContext *ctx, JSValueConst new_target, int argc, JSValueConst *argv) {
                         ${this.name}* instance=new ${this.name}();
-                        JSValue obj=JS_NewObjectClass(ctx, ${this.name}_classid);
+                        //JSValue proto=JS_GetClassProto(ctx,${this.binding.prefix}${this.name}_classid);
+                        //JSValue obj=JS_NewObjectProtoClass(ctx,proto,${this.binding.prefix}${this.name}_classid);
+                        //JS_FreeValue(ctx, proto);
+                        JSValue obj=JS_NewObjectClass(ctx,${this.binding.prefix}${this.name}_classid);
                         JS_SetOpaque(obj,instance);
                         return obj;
                     }
-                    static void ${this.name}_finalizer(JSRuntime *rt, JSValue obj) {
-                        ${this.name}* instance=(${this.name}*)JS_GetOpaque(obj,${this.name}_classid);
+                    static void ${this.binding.prefix}${this.name}_finalizer(JSRuntime *rt, JSValue obj) {
+                        ${this.name}* instance=(${this.name}*)JS_GetOpaque(obj,${this.binding.prefix}${this.name}_classid);
                         delete instance;
                     }
+                    ${this.methods.map(m=>m.getTopLevelDefinition()).join("\n")}
                 `;
                 break;
 
@@ -141,26 +177,37 @@ class Declaration {
     }
 
     getTopLevelRegistration() {
+        let s="";
+
         switch (this.type) {
             case "function":
                 return `
-                    JSValue ${this.name}_func=JS_NewCFunction(ctx,${this.binding.prefix}${this.name},"${this.name}",0);
-                    JS_SetPropertyStr(ctx,global,"${this.name}",${this.name}_func);
+                    JS_SetPropertyStr(ctx,global,"${this.name}",JS_NewCFunction(ctx,${this.binding.prefix}${this.name},"${this.name}",0));
                 `;
 
             case "class":
-                return `
-                    if (!${this.name}_classid) JS_NewClassID(&${this.name}_classid);
+                s+=`
+                    if (!${this.binding.prefix}${this.name}_classid) JS_NewClassID(&${this.binding.prefix}${this.name}_classid);
 
-                    JSClassDef ${this.name}_def={.class_name="${this.name}", .finalizer=${this.name}_finalizer};
-                    JS_NewClass(JS_GetRuntime(ctx),${this.name}_classid,&${this.name}_def);
+                    JSClassDef ${this.name}_def={.class_name="${this.name}", .finalizer=${this.binding.prefix}${this.name}_finalizer};
+                    JS_NewClass(JS_GetRuntime(ctx),${this.binding.prefix}${this.name}_classid,&${this.name}_def);
 
-                    JSValue ${this.name}_proto=JS_GetClassProto(ctx,${this.name}_classid);
-                    JSValue ${this.name}_ctorval = JS_NewCFunction2(ctx, ${this.name}_ctor, "${this.name}", 0, JS_CFUNC_constructor,0);
-                    JS_SetConstructor(ctx, ${this.name}_ctorval, ${this.name}_proto);
-                    JS_SetPropertyStr(ctx, global, "${this.name}", ${this.name}_ctorval);
-                    JS_FreeValue(ctx, ${this.name}_proto);
+                    JSValue ${this.name}_proto=JS_NewObject(ctx);
+                    JS_SetClassProto(ctx, ${this.binding.prefix}${this.name}_classid,${this.name}_proto);
+
+                    JSValue ${this.name}_ctorval=JS_NewCFunction2(ctx,${this.binding.prefix}${this.name}_ctor,"${this.name}",0,JS_CFUNC_constructor,0);
+                    JS_SetConstructor(ctx,${this.name}_ctorval,${this.name}_proto);
+                    JS_SetPropertyStr(ctx,global,"${this.name}",${this.name}_ctorval);
                 `;
+
+                s+=this.methods.map(m=>`
+                    JS_SetPropertyStr(ctx,${this.name}_proto,"${m.name}",JS_NewCFunction(ctx, ${this.binding.prefix}${this.name}_${m.name},"${m.name}",0));
+                `).join("\n");
+
+                s+=`
+                `;
+
+                return s;
                 break;
 
             default:
