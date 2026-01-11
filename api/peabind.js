@@ -17,7 +17,7 @@ class Declaration {
         if (!this.type)
             this.type="void";
 
-        if (this.type=="function") {
+        if (this.type=="function" || this.type=="class") {
             if (!this.args)
                 this.args=[];
 
@@ -26,7 +26,9 @@ class Declaration {
                 binding: this.binding,
                 name: `arg_${i}`
             }));
+        }
 
+        if (this.type=="function") {
             this.return=new Declaration(this.return,{
                 binding: this.binding,
                 name: "ret"
@@ -155,7 +157,12 @@ class Declaration {
                 return `
                     static JSClassID ${this.binding.prefix}${this.name}_classid=0;
                     static JSValue ${this.binding.prefix}${this.name}_ctor(JSContext *ctx, JSValueConst new_target, int argc, JSValueConst *argv) {
-                        ${this.name}* instance=new ${this.name}();
+                        if (argc!=${this.args.length}) return JS_ThrowTypeError(ctx, "wrong arg count");
+
+                        ${this.args.map((a,i)=>a.genDecl()).join("\n")}
+                        ${this.args.map((a,i)=>a.genUnpack(`argv[${i}]`)).join("\n")}
+
+                        ${this.name}* instance=new ${this.name}(${this.args.map(a=>a.name).join(",")});
                         //JSValue proto=JS_GetClassProto(ctx,${this.binding.prefix}${this.name}_classid);
                         //JSValue obj=JS_NewObjectProtoClass(ctx,proto,${this.binding.prefix}${this.name}_classid);
                         //JS_FreeValue(ctx, proto);

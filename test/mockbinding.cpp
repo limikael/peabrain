@@ -40,7 +40,10 @@ static JSValue pea_concat(JSContext *ctx, JSValueConst thisobj, int argc, JSValu
 }
 static JSClassID pea_TestClass_classid=0;
 static JSValue pea_TestClass_ctor(JSContext *ctx, JSValueConst new_target, int argc, JSValueConst *argv) {
-    TestClass* instance=new TestClass();
+    if (argc!=1) return JS_ThrowTypeError(ctx, "wrong arg count");
+    int arg_0;
+    JS_ToInt32(ctx,&arg_0,argv[0]);
+    TestClass* instance=new TestClass(arg_0);
     //JSValue proto=JS_GetClassProto(ctx,pea_TestClass_classid);
     //JSValue obj=JS_NewObjectProtoClass(ctx,proto,pea_TestClass_classid);
     //JS_FreeValue(ctx, proto);

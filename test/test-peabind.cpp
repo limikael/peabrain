@@ -58,7 +58,7 @@ void test_peabind_classes() {
     pea_init(ctx);
 
     const char *code="\
-        let t=new TestClass(); \
+        let t=new TestClass(5); \
         let v=t.getVal(); \
         t.setVal(123); \
         let u=t.getVal(); \
@@ -83,7 +83,7 @@ void test_peabind_classes() {
     assert(!JS_IsException(result));
 
     const char *res = JS_ToCString(ctx, result);
-    printf("out: %s\n",res);
+    //printf("out: %s\n",res);
     assert(!strcmp("a,5,123",res));
 
     JS_FreeValue(ctx,result);
