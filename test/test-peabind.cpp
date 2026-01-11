@@ -1,70 +1,12 @@
 #include <cstdio>
 #include <cassert>
+#include <string>
 
 extern "C" {
 #include "quickjs.h"
 }
 
-void pea_init(JSContext *ctx);
-
-void test_peabind() {
-	printf("- Peabind basic...\n");
-
-    JSRuntime *rt = JS_NewRuntime();
-    JSContext *ctx = JS_NewContext(rt);
-
-    pea_init(ctx);
-
-    const char *code="\
-        let a=helloint(); \
-        let b=helloinc(1); \
-        hellovoid(); \
-        let s=concat('xx','yy'); \
-        let caught='none'; \
-        try { \
-            let s2=concat('xx'); \
-        } \
-        catch (e) { \
-            caught=e.message; \
-        } \
-        [a,b,s,caught]; \
-    ";
-
-    JSValue result=JS_Eval(ctx,
-    	code,
-        strlen(code),
-        "<input>",
-        JS_EVAL_TYPE_GLOBAL
-    );
-
-    assert(!JS_IsException(result));
-
-    const char *res = JS_ToCString(ctx, result);
-    //printf("out: %s\n",res);
-    assert(!strcmp("123,2,xxyy,wrong arg count",res));
-
-    JS_FreeValue(ctx,result);
-    JS_FreeContext(ctx);
-    //JS_RunGC(rt);
-    JS_FreeRuntime(rt);
-}
-
-void test_peabind_classes() {
-    printf("- Peabind basic classes...\n");
-
-    JSRuntime *rt = JS_NewRuntime();
-    JSContext *ctx = JS_NewContext(rt);
-
-    pea_init(ctx);
-
-    const char *code="\
-        let t=new TestClass(5); \
-        let v=t.getVal(); \
-        t.setVal(123); \
-        let u=t.getVal(); \
-        ['a',v,u]; \
-    ";
-
+std::string runcode(JSContext *ctx, const char *code) {
     JSValue result=JS_Eval(ctx,
         code,
         strlen(code),
@@ -83,11 +25,60 @@ void test_peabind_classes() {
     assert(!JS_IsException(result));
 
     const char *res = JS_ToCString(ctx, result);
-    //printf("out: %s\n",res);
-    assert(!strcmp("a,5,123",res));
-
+    std::string resString=std::string(res);
+    JS_FreeCString(ctx,res);
     JS_FreeValue(ctx,result);
+
+    return resString;
+}
+
+void pea_init(JSContext *ctx);
+
+void test_peabind() {
+	printf("- Peabind basic...\n");
+
+    JSRuntime *rt = JS_NewRuntime();
+    JSContext *ctx = JS_NewContext(rt);
+
+    pea_init(ctx);
+    std::string res=runcode(ctx,"\
+        let a=helloint(); \
+        let b=helloinc(1); \
+        hellovoid(); \
+        let s=concat('xx','yy'); \
+        let caught='none'; \
+        try { \
+            let s2=concat('xx'); \
+        } \
+        catch (e) { \
+            caught=e.message; \
+        } \
+        [a,b,s,caught]; \
+    ");
+
+    assert(res=="123,2,xxyy,wrong arg count");
+
     JS_FreeContext(ctx);
-    //JS_RunGC(rt);
+    JS_FreeRuntime(rt);
+}
+
+void test_peabind_classes() {
+    printf("- Peabind basic classes...\n");
+
+    JSRuntime *rt = JS_NewRuntime();
+    JSContext *ctx = JS_NewContext(rt);
+
+    pea_init(ctx);
+    std::string res=runcode(ctx,"\
+        let t=new TestClass(5); \
+        let v=t.getVal(); \
+        t.setVal(123); \
+        let u=t.getVal(); \
+        ['a',v,u]; \
+    ");
+
+    assert(res=="a,5,123");
+
+    JS_FreeContext(ctx);
     JS_FreeRuntime(rt);
 }
