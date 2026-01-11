@@ -87,49 +87,118 @@ class Declaration {
         return (this.type=="void");
     }
 
-    getTopLevelDefinition() {
+    genFunctionCall() {
         if (this.type!="function")
             throw new Error("Only functions supported at top level");
 
-        let s="";
-
-        s+=`
-            static JSValue ${this.binding.prefix}${this.name}(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) {
-                if (argc!=${this.args.length})
-                    return JS_ThrowTypeError(ctx, "wrong arg count");
-        `;
-
-        s+=`
-                ${this.args.map((a,i)=>a.genDecl()).join("\n")}
-                ${this.args.map((a,i)=>a.genUnpack(`argv[${i}]`)).join("\n")}
-        `;
-
-        if (this.return.isVoid()) {
-            s+=`
-                    ${this.name}(${this.args.map(a=>a.name).join(",")});
-                    return JS_UNDEFINED;
-                }
+        if (this.return.isVoid())
+            return `
+                ${this.name}(${this.args.map(a=>a.name).join(",")});
+                return JS_UNDEFINED;
             `;
-        }
 
-        else {
-            s+=`
-                    ${this.return.genDecl()}
-                    ret=${this.name}(${this.args.map(a=>a.name).join(",")});
-                    return ${this.return.genPack()};
-                }
-            `;
-        }
+        return `
+            ${this.return.genDecl()}
+            ret=${this.name}(${this.args.map(a=>a.name).join(",")});
+            return ${this.return.genPack()};
+        `;
+    }
 
-        return s;
+    getTopLevelDefinition() {
+        switch (this.type) {
+            case "function":
+                return `
+                    static JSValue ${this.binding.prefix}${this.name}(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) {
+                        if (argc!=${this.args.length}) return JS_ThrowTypeError(ctx, "wrong arg count");
+
+                        ${this.args.map((a,i)=>a.genDecl()).join("\n")}
+                        ${this.args.map((a,i)=>a.genUnpack(`argv[${i}]`)).join("\n")}
+
+                        ${this.genFunctionCall()}
+                    }
+                `
+                break;
+
+            case "class":
+                return `
+                    static JSClassID ${this.name}_classid=0;
+                    static JSValue ${this.name}_ctor(JSContext *ctx, JSValueConst new_target, int argc, JSValueConst *argv) {
+                        ${this.name}* instance=new ${this.name}();
+                        JSValue obj=JS_NewObjectClass(ctx, ${this.name}_classid);
+                        JS_SetOpaque(obj,instance);
+                        return obj;
+                    }
+                    static void ${this.name}_finalizer(JSRuntime *rt, JSValue obj) {
+                        ${this.name}* instance=(${this.name}*)JS_GetOpaque(obj,${this.name}_classid);
+                        delete instance;
+                    }
+                `;
+                break;
+
+            default:
+                throw new Error("Only functions can classes supported at top level");
+        }
     }
 
     getTopLevelRegistration() {
-        return `
-            JSValue reg_${this.name}=JS_NewCFunction(ctx,${this.binding.prefix}${this.name},"${this.name}",0);
-            JS_SetPropertyStr(ctx,global,"${this.name}",reg_${this.name});
-        `;
+        switch (this.type) {
+            case "function":
+                return `
+                    JSValue ${this.name}_func=JS_NewCFunction(ctx,${this.binding.prefix}${this.name},"${this.name}",0);
+                    JS_SetPropertyStr(ctx,global,"${this.name}",${this.name}_func);
+                `;
+
+            case "class":
+                return `
+                    if (!${this.name}_classid) JS_NewClassID(&${this.name}_classid);
+
+                    JSClassDef ${this.name}_def={.class_name="${this.name}", .finalizer=${this.name}_finalizer};
+                    JS_NewClass(JS_GetRuntime(ctx),${this.name}_classid,&${this.name}_def);
+
+                    JSValue ${this.name}_proto=JS_GetClassProto(ctx,${this.name}_classid);
+                    JSValue ${this.name}_ctorval = JS_NewCFunction2(ctx, ${this.name}_ctor, "${this.name}", 0, JS_CFUNC_constructor,0);
+                    JS_SetConstructor(ctx, ${this.name}_ctorval, ${this.name}_proto);
+                    JS_SetPropertyStr(ctx, global, "${this.name}", ${this.name}_ctorval);
+                    JS_FreeValue(ctx, ${this.name}_proto);
+                `;
+                break;
+
+            default:
+                throw new Error("Only functions can classes supported at top level");
+        }
     }
+}
+
+function autoIndent(text, indentSize=4) {
+    const lines = text.split('\n');
+    let result = [];
+    let indentLevel = 0;
+
+    for (let line of lines) {
+        // Strip whitespace from the line
+        const trimmedLine = line.trim();
+        
+        // Skip empty lines
+        if (trimmedLine === '') {
+            continue;
+        }
+        
+        // Decrease indent level if line starts with '}'
+        if (trimmedLine.startsWith('}')) {
+            indentLevel = Math.max(0, indentLevel - 1);
+        }
+        
+        // Add indentation
+        const indentation = ' '.repeat(indentLevel * indentSize);
+        result.push(indentation + trimmedLine);
+        
+        // Increase indent level if line ends with '{'
+        if (trimmedLine.endsWith('{')) {
+            indentLevel++;
+        }
+    }
+    
+    return result.join('\n');
 }
 
 export class Binding {
@@ -151,7 +220,7 @@ export class Binding {
         this.declarationSource="";
         this.definitionSource="";
 
-        let source=`
+        let source=autoIndent(`
             extern "C" {
             #include "quickjs.h"
             }
@@ -166,7 +235,7 @@ export class Binding {
                 ${this.exports.map(x=>x.getTopLevelRegistration()).join("\n")}
                 JS_FreeValue(ctx,global);
             }
-        `;
+        `);
 
         await fsp.writeFile(this.outputFn,source);
     }

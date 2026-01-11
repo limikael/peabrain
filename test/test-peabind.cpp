@@ -8,7 +8,7 @@ extern "C" {
 void pea_init(JSContext *ctx);
 
 void test_peabind() {
-	printf("- Peabind...\n");
+	printf("- Peabind basic...\n");
 
     JSRuntime *rt = JS_NewRuntime();
     JSContext *ctx = JS_NewContext(rt);
@@ -40,8 +40,40 @@ void test_peabind() {
     assert(!JS_IsException(result));
 
     const char *res = JS_ToCString(ctx, result);
-    printf("out: %s\n",res);
+    //printf("out: %s\n",res);
     assert(!strcmp("123,2,xxyy,wrong arg count",res));
+
+    JS_FreeValue(ctx,result);
+    JS_FreeContext(ctx);
+    //JS_RunGC(rt);
+    JS_FreeRuntime(rt);
+}
+
+void test_peabind_classes() {
+    printf("- Peabind basic classes...\n");
+
+    JSRuntime *rt = JS_NewRuntime();
+    JSContext *ctx = JS_NewContext(rt);
+
+    pea_init(ctx);
+
+    const char *code="\
+        let t=new TestClass(); \
+        ['a']; \
+    ";
+
+    JSValue result=JS_Eval(ctx,
+        code,
+        strlen(code),
+        "<input>",
+        JS_EVAL_TYPE_GLOBAL
+    );
+
+    assert(!JS_IsException(result));
+
+    const char *res = JS_ToCString(ctx, result);
+    printf("out: %s\n",res);
+    assert(!strcmp("a",res));
 
     JS_FreeValue(ctx,result);
     JS_FreeContext(ctx);

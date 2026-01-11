@@ -26,6 +26,11 @@
 			"name": "concat",
 			"args": ["string","string"],
 			"return": "string"
+		},
+
+		{
+			"type": "class",
+			"name": "TestClass"
 		}
 	]
 }
