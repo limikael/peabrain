@@ -58,7 +58,8 @@ class Declaration {
                 break;
 
             default:
-                throw new Error("Can't decl this type: "+this.type);
+                let decl=this.binding.getClassDeclarationByName(this.type);
+                return `${decl.name}* ${this.name};\n`;
         }
     }
 
@@ -78,21 +79,32 @@ class Declaration {
                 `;
 
             default:
-                throw new Error("Can't unpack this type: "+this.type);
+                let decl=this.binding.getClassDeclarationByName(this.type);
+                return `
+                    ${this.name}=(${decl.name}*)JS_GetOpaque(${jsValueExpr},${this.binding.prefix}${decl.name}_classid);
+                `;
+
+                //instance=(${this.class.name}*)JS_GetOpaque(thisobj,${this.binding.prefix}${this.class.name}_classid);
+
+                //throw new Error("Can't unpack this type: "+this.type);
         }
     }
 
-    genPack() {
+    genPack(jsValueVar) {
         switch (this.type) {
             case "int":
-                return `JS_NewUint32(ctx,${this.name})\n`;
+                return `${jsValueVar}=JS_NewUint32(ctx,${this.name});\n`;
                 break;
 
             case "string":
-                return `JS_NewString(ctx,${this.name}.c_str())`;
+                return `${jsValueVar}=JS_NewString(ctx,${this.name}.c_str());\n`;
 
             default:
-                throw new Error("Can't pack this type: "+this.type);
+                let decl=this.binding.getClassDeclarationByName(this.type);
+                return `
+                    ${jsValueVar}=JS_NewObjectClass(ctx,${this.binding.prefix}${decl.name}_classid);
+                    JS_SetOpaque(${jsValueVar},${this.name});
+                `;
         }
     }
 
@@ -117,7 +129,9 @@ class Declaration {
         return `
             ${this.return.genDecl()}
             ret=${name}(${this.args.map(a=>a.name).join(",")});
-            return ${this.return.genPack()};
+            JSValue retval=JS_UNDEFINED;
+            ${this.return.genPack("retval")}
+            return retval;
         `;
     }
 
@@ -266,6 +280,25 @@ export class Binding {
         let descriptionContent=await fsp.readFile(this.descriptionFn,"utf8");
         this.description=JSON5.parse(descriptionContent);
         this.exports=this.description.exports.map(exp=>new Declaration(exp,{binding: this}));
+    }
+
+    getDeclarationByName(name) {
+        for (let exp of this.exports) {
+            if (exp.name==name)
+                return exp;
+        }
+    }
+
+    getClassDeclarationByName(name) {
+        let decl=this.getDeclarationByName(name);
+
+        if (!decl)
+            throw new Error("Unknown type: "+name);
+
+        if (decl.type!="class")
+            throw new Error("Not a class");
+
+        return decl;        
     }
 
     async generate() {

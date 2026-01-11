@@ -18,7 +18,6 @@
 			"args": ["int"],
 			"return": "int",
 			"type": "function"
-
 		},
 
 		{
@@ -42,6 +41,20 @@
 					"args": ["int"]
 				}
 			]
-		}
+		},
+
+		{
+			"name": "createTestClass",
+			"args": ["int"],
+			"return": "TestClass",
+			"type": "function"
+		},
+
+		{
+			"name": "getTestClassValue",
+			"args": ["TestClass"],
+			"return": "int",
+			"type": "function"
+		},
 	]
 }

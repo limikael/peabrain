@@ -82,3 +82,24 @@ void test_peabind_classes() {
     JS_FreeContext(ctx);
     JS_FreeRuntime(rt);
 }
+
+void test_peabind_references() {
+    printf("- Peabind return types classes...\n");
+
+    JSRuntime *rt = JS_NewRuntime();
+    JSContext *ctx = JS_NewContext(rt);
+
+    pea_init(ctx);
+    std::string res=runcode(ctx,"\
+        let t=createTestClass(5); \
+        let v=t.getVal(); \
+        let u=getTestClassValue(t); \
+        [v,u]; \
+    ");
+
+    assert(res=="5,5");
+
+    JS_FreeContext(ctx);
+    JS_FreeRuntime(rt);
+}
+

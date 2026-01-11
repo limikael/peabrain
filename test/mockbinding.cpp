@@ -7,8 +7,9 @@ static JSValue pea_helloint(JSContext *ctx, JSValueConst thisobj, int argc, JSVa
     if (argc!=0) return JS_ThrowTypeError(ctx, "wrong arg count");
     int ret;
     ret=helloint();
-    return JS_NewUint32(ctx,ret)
-    ;
+    JSValue retval=JS_UNDEFINED;
+    retval=JS_NewUint32(ctx,ret);
+    return retval;
 }
 static JSValue pea_hellovoid(JSContext *ctx, JSValueConst thisobj, int argc, JSValueConst *argv) {
     if (argc!=0) return JS_ThrowTypeError(ctx, "wrong arg count");
@@ -21,8 +22,9 @@ static JSValue pea_helloinc(JSContext *ctx, JSValueConst thisobj, int argc, JSVa
     JS_ToInt32(ctx,&arg_0,argv[0]);
     int ret;
     ret=helloinc(arg_0);
-    return JS_NewUint32(ctx,ret)
-    ;
+    JSValue retval=JS_UNDEFINED;
+    retval=JS_NewUint32(ctx,ret);
+    return retval;
 }
 static JSValue pea_concat(JSContext *ctx, JSValueConst thisobj, int argc, JSValueConst *argv) {
     if (argc!=2) return JS_ThrowTypeError(ctx, "wrong arg count");
@@ -36,7 +38,9 @@ static JSValue pea_concat(JSContext *ctx, JSValueConst thisobj, int argc, JSValu
     JS_FreeCString(ctx,arg_1_);
     std::string ret;
     ret=concat(arg_0,arg_1);
-    return JS_NewString(ctx,ret.c_str());
+    JSValue retval=JS_UNDEFINED;
+    retval=JS_NewString(ctx,ret.c_str());
+    return retval;
 }
 static JSClassID pea_TestClass_classid=0;
 static JSValue pea_TestClass_ctor(JSContext *ctx, JSValueConst new_target, int argc, JSValueConst *argv) {
@@ -60,8 +64,9 @@ static JSValue pea_TestClass_getVal(JSContext *ctx, JSValueConst thisobj, int ar
     TestClass* instance=(TestClass*)JS_GetOpaque(thisobj,pea_TestClass_classid);
     int ret;
     ret=instance->getVal();
-    return JS_NewUint32(ctx,ret)
-    ;
+    JSValue retval=JS_UNDEFINED;
+    retval=JS_NewUint32(ctx,ret);
+    return retval;
 }
 static JSValue pea_TestClass_setVal(JSContext *ctx, JSValueConst thisobj, int argc, JSValueConst *argv) {
     if (argc!=1) return JS_ThrowTypeError(ctx, "wrong arg count");
@@ -70,6 +75,27 @@ static JSValue pea_TestClass_setVal(JSContext *ctx, JSValueConst thisobj, int ar
     TestClass* instance=(TestClass*)JS_GetOpaque(thisobj,pea_TestClass_classid);
     instance->setVal(arg_0);
     return JS_UNDEFINED;
+}
+static JSValue pea_createTestClass(JSContext *ctx, JSValueConst thisobj, int argc, JSValueConst *argv) {
+    if (argc!=1) return JS_ThrowTypeError(ctx, "wrong arg count");
+    int arg_0;
+    JS_ToInt32(ctx,&arg_0,argv[0]);
+    TestClass* ret;
+    ret=createTestClass(arg_0);
+    JSValue retval=JS_UNDEFINED;
+    retval=JS_NewObjectClass(ctx,pea_TestClass_classid);
+    JS_SetOpaque(retval,ret);
+    return retval;
+}
+static JSValue pea_getTestClassValue(JSContext *ctx, JSValueConst thisobj, int argc, JSValueConst *argv) {
+    if (argc!=1) return JS_ThrowTypeError(ctx, "wrong arg count");
+    TestClass* arg_0;
+    arg_0=(TestClass*)JS_GetOpaque(argv[0],pea_TestClass_classid);
+    int ret;
+    ret=getTestClassValue(arg_0);
+    JSValue retval=JS_UNDEFINED;
+    retval=JS_NewUint32(ctx,ret);
+    return retval;
 }
 void pea_init(JSContext *ctx) {
     JSValue global=JS_GetGlobalObject(ctx);
@@ -87,5 +113,7 @@ void pea_init(JSContext *ctx) {
     JS_SetPropertyStr(ctx,global,"TestClass",TestClass_ctorval);
     JS_SetPropertyStr(ctx,TestClass_proto,"getVal",JS_NewCFunction(ctx, pea_TestClass_getVal,"getVal",0));
     JS_SetPropertyStr(ctx,TestClass_proto,"setVal",JS_NewCFunction(ctx, pea_TestClass_setVal,"setVal",0));
+    JS_SetPropertyStr(ctx,global,"createTestClass",JS_NewCFunction(ctx,pea_createTestClass,"createTestClass",0));
+    JS_SetPropertyStr(ctx,global,"getTestClassValue",JS_NewCFunction(ctx,pea_getTestClassValue,"getTestClassValue",0));
     JS_FreeValue(ctx,global);
 }

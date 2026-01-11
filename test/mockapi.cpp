@@ -15,3 +15,11 @@ void hellovoid() {
 std::string concat(std::string a, std::string b) {
 	return a+b;
 }
+
+TestClass *createTestClass(int val) {
+	return new TestClass(val);
+}
+
+int getTestClassValue(TestClass *t) {
+	return t->getVal();
+}
