@@ -14,7 +14,7 @@ program
     	await peabindGen({
     		descriptionFn: file,
     		outputFn: options.output,
-    		prefix: options.prefix
+    		prefix: options.prefix,
             includeDir: options.include
     	});
     });

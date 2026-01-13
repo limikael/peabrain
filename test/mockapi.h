@@ -28,4 +28,5 @@ private:
 };
 
 TestClass *createTestClass(int val_);
-int getTestClassValue(TestClass *t);
+int getTestClassValue(TestClass* t);
+int getTestClassValueRef(TestClass& t);

@@ -6,7 +6,7 @@
   "scripts": {
     "build:boot": "./scripts/generate-boot.js",
     "flash": "pnpm build:boot && pio run --target=upload",
-    "test": "make test"
+    "test": "make -j4 test"
   },
   "bin": {
     "peabrain": "api/peabrain.js",

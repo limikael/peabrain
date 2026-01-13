@@ -60,7 +60,15 @@ class Declaration {
 
             default:
                 let decl=this.binding.getClassDeclarationByName(this.type);
-                return `${decl.name}* ${this.name};\n`;
+                switch (this.ref) {
+                    case "ref":
+                        //return `${decl.name}& ${this.name};\n`;
+                        break;
+
+                    default:
+                        return `${decl.name}* ${this.name};\n`;
+                        break;
+                }
         }
     }
 
@@ -81,13 +89,21 @@ class Declaration {
 
             default:
                 let decl=this.binding.getClassDeclarationByName(this.type);
-                return `
-                    // FIX FIX FIX
-                    //${this.name}=(${decl.name}*)JS_GetOpaque(${jsValueExpr},${this.binding.prefix}${decl.name}_classid);
+                switch (this.ref) {
+                    case "ref":
+                        return `
+                            ${this.binding.prefix}opaque_t* opaque=(${this.binding.prefix}opaque_t*)JS_GetOpaque(${jsValueExpr},${this.binding.prefix}${decl.name}_classid);
+                            ${decl.name}& ${this.name}=*(${decl.name}*)opaque->instance;
+                        `;
+                        break;
 
-                    ${this.binding.prefix}opaque_t* opaque=(${this.binding.prefix}opaque_t*)JS_GetOpaque(${jsValueExpr},${this.binding.prefix}${decl.name}_classid);
-                    ${this.name}=(${decl.name}*)opaque->instance;
-                `;
+                    default:
+                        return `
+                            ${this.binding.prefix}opaque_t* opaque=(${this.binding.prefix}opaque_t*)JS_GetOpaque(${jsValueExpr},${this.binding.prefix}${decl.name}_classid);
+                            ${this.name}=(${decl.name}*)opaque->instance;
+                        `;
+                        break;
+                }
         }
     }
 
@@ -104,12 +120,14 @@ class Declaration {
                 let decl=this.binding.getClassDeclarationByName(this.type);
                 switch (this.ref) {
                     case "owned_ptr":
+                    case "owned_ref":
                         return `
                             ${jsValueVar}=JS_NewObjectClass(ctx,${this.binding.prefix}${decl.name}_classid);
                             JS_SetOpaque(${jsValueVar},${this.binding.prefix}opaque_create(${this.name},true));
                         `;
 
                     case "borrowed_ptr":
+                    case "borrowed_ref":
                         return `
                             ${jsValueVar}=JS_NewObjectClass(ctx,${this.binding.prefix}${decl.name}_classid);
                             JS_SetOpaque(${jsValueVar},${this.binding.prefix}opaque_create(${this.name},false));
@@ -129,9 +147,19 @@ class Declaration {
         if (this.type!="function")
             throw new Error("Only functions supported at top level");
 
+        //console.log("**** ref: "+this.return.ref);
+
         let name=this.name;
-        if (this.class)
-            name=`instance->${this.name}`;
+        if (this.template)
+            name=`${name}<${this.template}>`
+
+        if (this.class) {
+            if (["borrowed_ref","owned_ref"].includes(this.return.ref))
+                name=`&instance->${name}`;
+
+            else
+                name=`instance->${name}`;
+        }
 
         if (this.return.isVoid())
             return `
@@ -184,20 +212,20 @@ class Declaration {
 
             case "class":
                 return `
-                    static JSClassID ${this.binding.prefix}${this.name}_classid=0;
                     static JSValue ${this.binding.prefix}${this.name}_ctor(JSContext *ctx, JSValueConst new_target, int argc, JSValueConst *argv) {
                         if (argc!=${this.args.length}) return JS_ThrowTypeError(ctx, "wrong arg count");
 
                         ${this.args.map((a,i)=>a.genDecl()).join("\n")}
                         ${this.args.map((a,i)=>a.genUnpack(`argv[${i}]`)).join("\n")}
 
-                        ${this.name}* instance=new ${this.name}(${this.args.map(a=>a.name).join(",")});
-                        //JSValue proto=JS_GetClassProto(ctx,${this.binding.prefix}${this.name}_classid);
-                        //JSValue obj=JS_NewObjectProtoClass(ctx,proto,${this.binding.prefix}${this.name}_classid);
-                        //JS_FreeValue(ctx, proto);
-                        JSValue obj=JS_NewObjectClass(ctx,${this.binding.prefix}${this.name}_classid);
-                        JS_SetOpaque(obj,${this.binding.prefix}opaque_create(instance,true));
-                        return obj;
+                        ${(this.constructable!==false)?`
+                            ${this.name}* instance=new ${this.name}(${this.args.map(a=>a.name).join(",")});
+                            JSValue obj=JS_NewObjectClass(ctx,${this.binding.prefix}${this.name}_classid);
+                            JS_SetOpaque(obj,${this.binding.prefix}opaque_create(instance,true));
+                            return obj;
+                        `:`
+                            return JS_ThrowTypeError(ctx, "abstract");
+                        `}
                     }
                     static void ${this.binding.prefix}${this.name}_finalizer(JSRuntime *rt, JSValue obj) {
                         //${this.name}* instance=(${this.name}*)JS_GetOpaque(obj,${this.binding.prefix}${this.name}_classid);
@@ -217,6 +245,15 @@ class Declaration {
             default:
                 throw new Error("Only functions can classes supported at top level");
         }
+    }
+
+    getTopLevelForward() {
+        if (this.type!="class")
+            return "";
+
+        return `
+            static JSClassID ${this.binding.prefix}${this.name}_classid=0;
+        `;
     }
 
     getTopLevelRegistration() {
@@ -318,7 +355,7 @@ export class Binding {
             this.includeDir=path.dirname(this.outputFn);
 
         this.includeFn=path.join(this.includeDir,this.basename+".h");
-        console.log(this.includeFn);
+        //console.log(this.includeFn);
 
         if (!this.prefix)
             this.prefix="pea_";
@@ -328,6 +365,14 @@ export class Binding {
         let descriptionContent=await fsp.readFile(this.descriptionFn,"utf8");
         this.description=JSON5.parse(descriptionContent);
         this.exports=this.description.exports.map(exp=>new Declaration(exp,{binding: this}));
+
+        if (!this.description.include)
+            this.description.include=[];
+
+        if (!this.description.namespace)
+            this.description.namespace=[];
+
+        this.description.namespace=[this.description.namespace].flat();
     }
 
     getDeclarationByName(name) {
@@ -353,6 +398,20 @@ export class Binding {
         return this.exports.filter(x=>x.type=="class");
     }
 
+    getBeginNamespace() {
+        if (!this.description.namespace.length)
+            return "";
+
+        return `namespace ${this.description.namespace[0]} {\n`;
+    }
+
+    getEndNamespace() {
+        if (!this.description.namespace.length)
+            return "";
+
+        return `}\n`;
+    }
+
     async generate() {
         await this.init();
 
@@ -367,6 +426,11 @@ export class Binding {
             #include <string>
             #include <cstdlib>
 
+            ${this.description.include.map(inc=>`#include "${inc}"`).join("\n")}
+            ${this.description.namespace.map(ns=>`using namespace ${ns};`).join("\n")}
+
+            ${this.getBeginNamespace()}
+
             typedef struct {
                 void *instance;
                 bool owned;
@@ -379,7 +443,8 @@ export class Binding {
                 return opaque;
             }
 
-            ${this.description.include.map(inc=>`#include "${inc}"`).join("\n")}
+            ${this.exports.map(exp=>exp.getTopLevelForward()).join("\n")}
+
             ${this.exports.map(exp=>exp.getTopLevelDefinition()).join("\n")}
 
             void ${this.prefix}init(JSContext *ctx) {
@@ -389,6 +454,8 @@ export class Binding {
             }
 
             ${this.getClassExports().map(x=>x.getAssignerImplementation()).join("\n")}
+
+            ${this.getEndNamespace()}
         `);
 
         await fsp.writeFile(this.outputFn,source);
@@ -401,8 +468,12 @@ export class Binding {
 
             ${this.description.include.map(inc=>`#include "${inc}"`).join("\n")}
 
+            ${this.getBeginNamespace()}
+
             void ${this.prefix}init(JSContext *ctx);
             ${this.getClassExports().map(x=>x.getAssignerDeclaration()).join("\n")}
+
+            ${this.getEndNamespace()}
         `);
 
         await fsp.writeFile(this.includeFn,includeSource);

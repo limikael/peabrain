@@ -58,6 +58,13 @@
 		},
 
 		{
+			"name": "getTestClassValueRef",
+			"args": [{"type": "TestClass", "ref": "ref"}],
+			"return": "int",
+			"type": "function"
+		},
+
+		{
 			"name": "AnotherTest",
 			"type": "class",
 			"methods": [

@@ -20,6 +20,10 @@ TestClass *createTestClass(int val) {
 	return new TestClass(val);
 }
 
-int getTestClassValue(TestClass *t) {
+int getTestClassValue(TestClass* t) {
 	return t->getVal();
+}
+
+int getTestClassValueRef(TestClass& t) {
+	return t.getVal();
 }

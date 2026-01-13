@@ -96,10 +96,11 @@ void test_peabind_references() {
         let t=createTestClass(5); \
         let v=t.getVal(); \
         let u=getTestClassValue(t); \
-        [v,u]; \
+        let w=getTestClassValueRef(t); \
+        [v,u,w]; \
     ");
 
-    assert(res=="5,5");
+    assert(res=="5,5,5");
 
     JS_FreeContext(ctx);
     JS_FreeRuntime(rt);
