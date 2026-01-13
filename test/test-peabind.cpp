@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <cassert>
 #include <string>
+#include "mockbinding.h"
 
 extern "C" {
 #include "quickjs.h"
@@ -32,7 +33,7 @@ std::string runcode(JSContext *ctx, const char *code) {
     return resString;
 }
 
-void pea_init(JSContext *ctx);
+//void pea_init(JSContext *ctx);
 
 void test_peabind() {
 	printf("- Peabind basic...\n");
@@ -77,7 +78,7 @@ void test_peabind_classes() {
         ['a',v,u]; \
     ");
 
-    printf("ret: %s\n",res.c_str());
+    //printf("ret: %s\n",res.c_str());
     assert(res=="a,5,123");
 
     JS_FreeContext(ctx);
@@ -118,6 +119,27 @@ void test_peabind_borrowed_references() {
     ");
 
     assert(res=="789");
+
+    JS_FreeContext(ctx);
+    JS_FreeRuntime(rt);
+}
+
+void test_peabind_assigner() {
+    printf("- Peabind assigner...\n");
+
+    JSRuntime *rt = JS_NewRuntime();
+    JSContext *ctx = JS_NewContext(rt);
+
+    pea_init(ctx);
+    pea_add_TestClass(ctx,"atest",new TestClass(567));
+
+    std::string res=runcode(ctx,"\
+        let t=atest.getVal(); \
+        [t]; \
+    ");
+
+    //printf("ret: %s\n",res.c_str());
+    assert(res=="567");
 
     JS_FreeContext(ctx);
     JS_FreeRuntime(rt);

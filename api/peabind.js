@@ -1,5 +1,6 @@
 import fs, {promises as fsp} from "fs";
 import JSON5 from "json5";
+import path from "path";
 
 class Declaration {
     constructor(def, extra={}) {
@@ -246,15 +247,30 @@ class Declaration {
                     JS_SetPropertyStr(ctx,${this.name}_proto,"${m.name}",JS_NewCFunction(ctx, ${this.binding.prefix}${this.name}_${m.name},"${m.name}",0));
                 `).join("\n");
 
-                s+=`
-                `;
-
                 return s;
                 break;
 
             default:
-                throw new Error("Only functions can classes supported at top level");
+                throw new Error("Only functions and classes supported at top level");
         }
+    }
+
+    getAssignerImplementation() {
+        return `
+            void ${this.binding.prefix}add_${this.name}(JSContext *ctx, const char *name, ${this.name}* val) {
+                JSValue global=JS_GetGlobalObject(ctx);
+                JSValue v=JS_NewObjectClass(ctx,${this.binding.prefix}${this.name}_classid);
+                JS_SetOpaque(v,${this.binding.prefix}opaque_create(val,false));
+                JS_SetPropertyStr(ctx,global,name,v);
+                JS_FreeValue(ctx,global);
+            }
+        `;
+    }
+
+    getAssignerDeclaration() {
+        return `
+            void ${this.binding.prefix}add_${this.name}(JSContext *ctx, const char *name, ${this.name}* val);
+        `;
     }
 }
 
@@ -291,10 +307,18 @@ function autoIndent(text, indentSize=4) {
 }
 
 export class Binding {
-    constructor({descriptionFn, outputFn, prefix}) {
+    constructor({descriptionFn, outputFn, prefix, includeDir}) {
         this.descriptionFn=descriptionFn;
         this.outputFn=outputFn;
         this.prefix=prefix;
+        this.includeDir=includeDir;
+
+        this.basename=path.parse(this.outputFn).name;
+        if (!this.includeDir)
+            this.includeDir=path.dirname(this.outputFn);
+
+        this.includeFn=path.join(this.includeDir,this.basename+".h");
+        console.log(this.includeFn);
 
         if (!this.prefix)
             this.prefix="pea_";
@@ -323,6 +347,10 @@ export class Binding {
             throw new Error("Not a class");
 
         return decl;        
+    }
+
+    getClassExports() {
+        return this.exports.filter(x=>x.type=="class");
     }
 
     async generate() {
@@ -359,9 +387,25 @@ export class Binding {
                 ${this.exports.map(x=>x.getTopLevelRegistration()).join("\n")}
                 JS_FreeValue(ctx,global);
             }
+
+            ${this.getClassExports().map(x=>x.getAssignerImplementation()).join("\n")}
         `);
 
         await fsp.writeFile(this.outputFn,source);
+
+        let includeSource=autoIndent(`
+            #pragma once
+            extern "C" {
+            #include "quickjs.h"
+            }
+
+            ${this.description.include.map(inc=>`#include "${inc}"`).join("\n")}
+
+            void ${this.prefix}init(JSContext *ctx);
+            ${this.getClassExports().map(x=>x.getAssignerDeclaration()).join("\n")}
+        `);
+
+        await fsp.writeFile(this.includeFn,includeSource);
     }
 }
 

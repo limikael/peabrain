@@ -183,3 +183,17 @@ void pea_init(JSContext *ctx) {
     JS_SetPropertyStr(ctx,AnotherTest_proto,"getTestClass",JS_NewCFunction(ctx, pea_AnotherTest_getTestClass,"getTestClass",0));
     JS_FreeValue(ctx,global);
 }
+void pea_add_TestClass(JSContext *ctx, const char *name, TestClass* val) {
+    JSValue global=JS_GetGlobalObject(ctx);
+    JSValue v=JS_NewObjectClass(ctx,pea_TestClass_classid);
+    JS_SetOpaque(v,pea_opaque_create(val,false));
+    JS_SetPropertyStr(ctx,global,name,v);
+    JS_FreeValue(ctx,global);
+}
+void pea_add_AnotherTest(JSContext *ctx, const char *name, AnotherTest* val) {
+    JSValue global=JS_GetGlobalObject(ctx);
+    JSValue v=JS_NewObjectClass(ctx,pea_AnotherTest_classid);
+    JS_SetOpaque(v,pea_opaque_create(val,false));
+    JS_SetPropertyStr(ctx,global,name,v);
+    JS_FreeValue(ctx,global);
+}

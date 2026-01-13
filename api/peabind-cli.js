@@ -9,11 +9,13 @@ program
     .argument('<file>', 'Binding descriptor .json file')
     .requiredOption('-o, --output <path>', 'Output file')
     .option('-p, --prefix <path>', 'Prefix for generated symbols')
+    .option('-I, --include <path>', 'Include dir where to save include file')
     .action(async (file, options)=>{
     	await peabindGen({
     		descriptionFn: file,
     		outputFn: options.output,
     		prefix: options.prefix
+            includeDir: options.include
     	});
     });
 
