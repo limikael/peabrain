@@ -291,10 +291,13 @@ function autoIndent(text, indentSize=4) {
 }
 
 export class Binding {
-    constructor({descriptionFn, outputFn}) {
+    constructor({descriptionFn, outputFn, prefix}) {
         this.descriptionFn=descriptionFn;
         this.outputFn=outputFn;
-        this.prefix="pea_";
+        this.prefix=prefix;
+
+        if (!this.prefix)
+            this.prefix="pea_";
     }
 
     async init() {
