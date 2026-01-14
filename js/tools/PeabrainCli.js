@@ -1,8 +1,8 @@
 import * as esbuild from "esbuild";
 import path from "node:path";
-import {esbuildGlobalImportPlugin} from "./esbuild-util.js";
+import {esbuildGlobalImportPlugin} from "../utils/esbuild-util.js";
 import Device from "./Device.js";
-import {stringChunkify} from "./js-util.js";
+import {stringChunkify} from "../utils/js-util.js";
 
 export default class PreabrainCli {
     init(options) {

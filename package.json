@@ -4,13 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build:boot": "./scripts/generate-boot.js",
+    "build:boot": "./js/device/generate-boot.js",
     "flash": "pnpm build:boot && pio run --target=upload",
     "test": "make -j4 test"
   },
   "bin": {
-    "peabrain": "api/peabrain.js",
-    "peabind": "api/peabind-cli.js"
+    "peabrain": "js/tools/peabrain-cli.js",
+    "peabind": "js/tools/peabind-cli.js"
   },
   "type": "module",
   "keywords": [],

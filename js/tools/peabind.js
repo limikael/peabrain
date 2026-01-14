@@ -51,7 +51,7 @@ class Declaration {
     genDecl() {
         switch (this.type) {
             case "int":
-                return `int ${this.name};\n`;
+                return `int32_t ${this.name};\n`;
                 break;
 
             case "string":

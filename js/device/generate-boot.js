@@ -6,7 +6,7 @@ import fs from "node:fs";
 
 
 const result = await esbuild.build({
-	entryPoints: ["./api/boot.js"],
+	entryPoints: ["./js/device/boot.js"],
     minify: true,
     bundle: true,
     write: false,        // <-- critical

@@ -5,7 +5,7 @@
 #include "SPIFFS.h"
 
 JsEngine js(Serial);
-CanPlugin can(5,4);
+//CanPlugin can(5,4);
 
 void myTask(void *arg) {
     for (;;) {
@@ -15,7 +15,7 @@ void myTask(void *arg) {
 }
 
 void setup() {
-    js.addPlugin(&can);
+    //js.addPlugin(&can);
 
 	pinMode(8,OUTPUT);
 	digitalWrite(8,0);

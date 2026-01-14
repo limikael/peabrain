@@ -247,10 +247,10 @@ void JsEngine::loop() {
 
         JS_RunGC(rt);
 
-        /*if (!JS_IsUndefined(bootError)) {
+        if (!JS_IsUndefined(bootError)) {
             stream.println("**** BOOT ERROR ****");
             printJsValue(bootError);
-        }*/
+        }
     }
 
     std::vector<JsEngineTimer> expired;
@@ -298,17 +298,16 @@ void JsEngine::loop() {
 
         s[len]='\0';
 
-        //stream.printf("reading: %d %s\n",len,s);
-
-        ///*if (s[0]=='#') {
-        //    stream.printf("restart...\n");
-        //    reloadScheduled=true;
-        //}
-
         JSValue args[1];
         args[0]=JS_NewString(ctx,s);
 
         JSValue ret=JS_Call(ctx,serialDataFunc,JS_UNDEFINED,1,args);
+        if (JS_IsException(ret)) {
+            JSValue err=getExceptionMessage();
+            printJsValue(err);
+            JS_FreeValue(ctx,err);
+        }
+
         JS_FreeValue(ctx,args[0]);
         JS_FreeValue(ctx,ret);
     }
@@ -341,6 +340,8 @@ JSValue JsEngine::serialWrite(int argc, JSValueConst *argv) {
     if (s) {
         for (int i=0; i<strlen(s); i++)
             stream.write(s[i]);
+
+        stream.flush();
 
         //stream.print(s);
         JS_FreeCString(ctx, s);

@@ -18,7 +18,7 @@ static JSClassID pea_TestClass_classid=0;
 static JSClassID pea_AnotherTest_classid=0;
 static JSValue pea_helloint(JSContext *ctx, JSValueConst thisobj, int argc, JSValueConst *argv) {
     if (argc!=0) return JS_ThrowTypeError(ctx, "wrong arg count");
-    int ret;
+    int32_t ret;
     ret=helloint();
     JSValue retval=JS_UNDEFINED;
     retval=JS_NewUint32(ctx,ret);
@@ -31,9 +31,9 @@ static JSValue pea_hellovoid(JSContext *ctx, JSValueConst thisobj, int argc, JSV
 }
 static JSValue pea_helloinc(JSContext *ctx, JSValueConst thisobj, int argc, JSValueConst *argv) {
     if (argc!=1) return JS_ThrowTypeError(ctx, "wrong arg count");
-    int arg_0;
+    int32_t arg_0;
     JS_ToInt32(ctx,&arg_0,argv[0]);
-    int ret;
+    int32_t ret;
     ret=helloinc(arg_0);
     JSValue retval=JS_UNDEFINED;
     retval=JS_NewUint32(ctx,ret);
@@ -57,7 +57,7 @@ static JSValue pea_concat(JSContext *ctx, JSValueConst thisobj, int argc, JSValu
 }
 static JSValue pea_TestClass_ctor(JSContext *ctx, JSValueConst new_target, int argc, JSValueConst *argv) {
     if (argc!=1) return JS_ThrowTypeError(ctx, "wrong arg count");
-    int arg_0;
+    int32_t arg_0;
     JS_ToInt32(ctx,&arg_0,argv[0]);
     TestClass* instance=new TestClass(arg_0);
     JSValue obj=JS_NewObjectClass(ctx,pea_TestClass_classid);
@@ -79,7 +79,7 @@ static JSValue pea_TestClass_getVal(JSContext *ctx, JSValueConst thisobj, int ar
     pea_opaque_t* opaque=(pea_opaque_t*)JS_GetOpaque(thisobj,pea_TestClass_classid);
     //TestClass* instance=(TestClass*)JS_GetOpaque(thisobj,pea_TestClass_classid);
     TestClass* instance=(TestClass*)opaque->instance;
-    int ret;
+    int32_t ret;
     ret=instance->getVal();
     JSValue retval=JS_UNDEFINED;
     retval=JS_NewUint32(ctx,ret);
@@ -87,7 +87,7 @@ static JSValue pea_TestClass_getVal(JSContext *ctx, JSValueConst thisobj, int ar
 }
 static JSValue pea_TestClass_setVal(JSContext *ctx, JSValueConst thisobj, int argc, JSValueConst *argv) {
     if (argc!=1) return JS_ThrowTypeError(ctx, "wrong arg count");
-    int arg_0;
+    int32_t arg_0;
     JS_ToInt32(ctx,&arg_0,argv[0]);
     pea_opaque_t* opaque=(pea_opaque_t*)JS_GetOpaque(thisobj,pea_TestClass_classid);
     //TestClass* instance=(TestClass*)JS_GetOpaque(thisobj,pea_TestClass_classid);
@@ -97,7 +97,7 @@ static JSValue pea_TestClass_setVal(JSContext *ctx, JSValueConst thisobj, int ar
 }
 static JSValue pea_createTestClass(JSContext *ctx, JSValueConst thisobj, int argc, JSValueConst *argv) {
     if (argc!=1) return JS_ThrowTypeError(ctx, "wrong arg count");
-    int arg_0;
+    int32_t arg_0;
     JS_ToInt32(ctx,&arg_0,argv[0]);
     TestClass* ret;
     ret=createTestClass(arg_0);
@@ -111,7 +111,7 @@ static JSValue pea_getTestClassValue(JSContext *ctx, JSValueConst thisobj, int a
     TestClass* arg_0;
     pea_opaque_t* opaque=(pea_opaque_t*)JS_GetOpaque(argv[0],pea_TestClass_classid);
     arg_0=(TestClass*)opaque->instance;
-    int ret;
+    int32_t ret;
     ret=getTestClassValue(arg_0);
     JSValue retval=JS_UNDEFINED;
     retval=JS_NewUint32(ctx,ret);
@@ -121,7 +121,7 @@ static JSValue pea_getTestClassValueRef(JSContext *ctx, JSValueConst thisobj, in
     if (argc!=1) return JS_ThrowTypeError(ctx, "wrong arg count");
     pea_opaque_t* opaque=(pea_opaque_t*)JS_GetOpaque(argv[0],pea_TestClass_classid);
     TestClass& arg_0=*(TestClass*)opaque->instance;
-    int ret;
+    int32_t ret;
     ret=getTestClassValueRef(arg_0);
     JSValue retval=JS_UNDEFINED;
     retval=JS_NewUint32(ctx,ret);

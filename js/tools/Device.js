@@ -10,12 +10,8 @@ export default class Device extends EventEmitter {
     this.nextId = 1;
     this.pending = new Map();
 
-    /*this.port.on("data",data=>{
-      process.stdout.write(data);
-    });*/
-
     this.parser.on('data', (line) => {
-      line=line.trim().replace(/^>+|>+$/g, '').trim();
+      line=line.trim().replace(/^>+|>+$/g, '').replace("\u001b","").trim();
 
       let msg;
       try {
@@ -56,7 +52,7 @@ export default class Device extends EventEmitter {
   async call(method, params = []) {
     const id = this.nextId++;
     const msg = { type: 'call', id, method, params };
-    let data=JSON.stringify(msg) + '\n';
+    let data="\u001b"+JSON.stringify(msg)+"\n";
 
     return new Promise((resolve, reject) => {
       this.pending.set(id, { resolve, reject });
