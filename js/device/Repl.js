@@ -1,5 +1,4 @@
-import {EventEmitter} from "canopener";
-import {safeJsonParse} from "../utils/js-util.js";
+import EventEmitter from "../utils/EventEmitter.js";
 
 export default class Repl extends EventEmitter {
     constructor(serial, model) {
@@ -63,11 +62,7 @@ export default class Repl extends EventEmitter {
 
             case "\n":
                 this.serial.write('\n');
-                let message=safeJsonParse(this.line);
-                if (message && this.line.trim().startsWith("{"))
-                    this.emit("message",message);
-
-                else if (this.line.trim().length) {
+                if (this.line.trim().length) {
                     try {
                         let res=global.eval(this.line);
                         this.serial.write(String(res)+"\n");

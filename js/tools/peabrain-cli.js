@@ -15,6 +15,7 @@ program
     .command('deploy')
     .argument('<file>', 'local JS file to deploy')
     .option('-p, --port <path>', 'serial port path', '/dev/ttyUSB0')
+    .option('-f, --follow', 'keep port open')
     .action(async (file, options) => {
         await peabrainCli.deploy({file, ...options});
     });

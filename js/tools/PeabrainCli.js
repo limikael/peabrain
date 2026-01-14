@@ -82,6 +82,9 @@ export default class PreabrainCli {
 
         await this.start(options);
 
+        if (options.follow)
+            await new Promise(r=>{});
+
         /*await device.scheduleReload();
 
         await new Promise(resolve=>{

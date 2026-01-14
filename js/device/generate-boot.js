@@ -11,12 +11,14 @@ const result = await esbuild.build({
     bundle: true,
     write: false,        // <-- critical
     platform: "neutral",// or "node", "browser"
-    //format: "esm",       // or "cjs"
-    format: "iife",       // or "cjs"
+    format: "esm",       // or "cjs"
+    //format: "iife",       // or "cjs"
     conditions: ["mcu", "import", "default"]
 });
 
 let source=new TextDecoder("utf-8").decode(result.outputFiles[0].contents);
+//console.log(source);
+
 let s=source;
 
 s=s.replaceAll("\n","\\n");

@@ -1,11 +1,13 @@
 #include "JsEngine.h"
 #include "CanPlugin.h"
+#include "UiPlugin.h"
 #include <Arduino.h>
 #include "FS.h"
 #include "SPIFFS.h"
 
 JsEngine js(Serial);
 //CanPlugin can(5,4);
+UiPlugin ui;
 
 void myTask(void *arg) {
     for (;;) {
@@ -15,10 +17,13 @@ void myTask(void *arg) {
 }
 
 void setup() {
-    //js.addPlugin(&can);
+    ui.begin();
 
-	pinMode(8,OUTPUT);
-	digitalWrite(8,0);
+    //js.addPlugin(&can);
+    js.addPlugin(&ui);
+
+	/*pinMode(8,OUTPUT);
+	digitalWrite(8,0);*/
 
     //Serial.setRxBufferSize(1024);  // must be BEFORE begin()
     Serial.begin(112500);
