@@ -1,13 +1,6 @@
 import Repl from "./Repl.js";
 import EventEmitter from "../utils/EventEmitter.js";
-/*import {renderController, useEncoderDelta, useEncoder, useClampedEncoder,
-		useEncoderButton} from "../ui/device-ui.js";*/
 
-/*global.renderController=renderController;
-global.useEncoder=useEncoder;
-global.useEncoderDelta=useEncoderDelta;
-global.useClampedEncoder=useClampedEncoder;
-global.useEncoderButton=useEncoderButton;*/
 global.EventEmitter=EventEmitter;
 
 global.serial=new EventEmitter();
