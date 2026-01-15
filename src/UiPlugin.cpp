@@ -32,6 +32,7 @@ void UiPlugin::init() {
     jsEngine->addGlobal("setEncoderFunc",jsEngine->newMethod(this,&UiPlugin::setEncoderFunc,1));
     jsEngine->addGlobal("setButtonFunc",jsEngine->newMethod(this,&UiPlugin::setButtonFunc,1));
     jsEngine->addGlobal("getEncoderValue",jsEngine->newMethod(this,&UiPlugin::getEncoderValue,0));
+    lcd.clear();
 }
 
 void UiPlugin::loop() {
@@ -70,6 +71,8 @@ void UiPlugin::close() {
 
     JS_FreeValue(jsEngine->getContext(),encoderFunc);
     encoderFunc=JS_UNDEFINED;
+
+    lcd.clear();
 }
 
 JSValue UiPlugin::displayWrite(int argc, JSValueConst *argv) {
