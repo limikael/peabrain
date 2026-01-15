@@ -82,15 +82,21 @@ export class DeviceUi {
 	}
 
 	setLines(lines) {
+		let s="";
+
 		for (let i=0; i<4; i++) {
 			let line=lines[i];
 			if (!line)
 				line="";
 
 			line=line.padEnd(20);
-			displaySetCursor(0,i);
-			displayWrite(line);
+			line=line.slice(0,20);
+			s+=line;
+//			displaySetCursor(0,i);
+//			displayWrite(line);
 		}
+
+		displayUpdate(s);
 	}
 
 	refresh() {

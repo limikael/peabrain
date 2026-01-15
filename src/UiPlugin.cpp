@@ -3,7 +3,8 @@
 UiPlugin::UiPlugin():
 		lcd(0x27,20,4),
         encoder(20,21),
-        button(10) {
+        button(10),
+        lcdController(lcd) {
     buttonFunc=JS_UNDEFINED;
     encoderFunc=JS_UNDEFINED;
 }
@@ -29,10 +30,12 @@ void UiPlugin::setJsEngine(JsEngine& jsEngine_) {
 void UiPlugin::init() {
 	jsEngine->addGlobal("displayWrite",jsEngine->newMethod(this,&UiPlugin::displayWrite,1));
 	jsEngine->addGlobal("displaySetCursor",jsEngine->newMethod(this,&UiPlugin::displaySetCursor,2));
+    jsEngine->addGlobal("displayUpdate",jsEngine->newMethod(this,&UiPlugin::displayUpdate,1));
     jsEngine->addGlobal("setEncoderFunc",jsEngine->newMethod(this,&UiPlugin::setEncoderFunc,1));
     jsEngine->addGlobal("setButtonFunc",jsEngine->newMethod(this,&UiPlugin::setButtonFunc,1));
     jsEngine->addGlobal("getEncoderValue",jsEngine->newMethod(this,&UiPlugin::getEncoderValue,0));
     lcd.clear();
+    lcdController.clear();
 }
 
 void UiPlugin::loop() {
@@ -73,6 +76,35 @@ void UiPlugin::close() {
     encoderFunc=JS_UNDEFINED;
 
     lcd.clear();
+    lcdController.clear();
+}
+
+JSValue UiPlugin::displayUpdate(int argc, JSValueConst *argv) {
+    if (argc!=1)
+        return JS_ThrowTypeError(jsEngine->getContext(), "wrong number of arguments");
+
+    const char *s=JS_ToCString(jsEngine->getContext(),argv[0]);
+    if (!s)
+        return JS_UNDEFINED;
+
+    if (strlen(s)!=80)
+        return JS_UNDEFINED;
+
+    lcdController.update(s);
+
+    /*for (int i=0; i<4; i++) {
+        char row[21];
+        memcpy(row,&s[i*20],20);
+        row[20]='\0';
+        lcd.setCursor(0,i);
+        lcd.print(row);
+    }*/
+
+    //lcd.print(s);
+
+    JS_FreeCString(jsEngine->getContext(),s);
+
+    return JS_UNDEFINED;
 }
 
 JSValue UiPlugin::displayWrite(int argc, JSValueConst *argv) {
