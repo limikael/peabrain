@@ -156,7 +156,7 @@ void JsEngine::reset() {
 
     bootInProgress=false;
     bootError=JS_UNDEFINED;
-    JSValue val=JS_Eval(ctx, boot_js, strlen(boot_js), "<builtin>", JS_EVAL_TYPE_GLOBAL);
+    JSValue val=JS_Eval(ctx, boot_js, strlen(boot_js), "boot", JS_EVAL_TYPE_GLOBAL);
     if (JS_IsException(val))
         bootError=getExceptionMessage();
 
@@ -171,7 +171,7 @@ void JsEngine::reset() {
 
             int len=strlen(content.c_str());
             stream.printf("running program...\n");
-            JSValue bootval=JS_Eval(ctx, content.c_str(), len, "<builtin>", JS_EVAL_TYPE_GLOBAL);
+            JSValue bootval=JS_Eval(ctx, content.c_str(), len, "program", JS_EVAL_TYPE_GLOBAL);
             if (JS_IsException(bootval)) {
                 bootError=getExceptionMessage();
                 stream.printf("Boot error!\n");
@@ -211,6 +211,10 @@ void JsEngine::pumpJobs() {
 
     while (ret>0) {
         ret=JS_ExecutePendingJob(rt, &tmpctx);
+        if (ret) {
+            //Serial.printf("execute pending: %d\n",ret);
+        }
+
         if (ret<0) {
             JSValue ex=JS_GetException(tmpctx);
             const char *s=JS_ToCString(tmpctx, ex);

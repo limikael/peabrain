@@ -3,6 +3,9 @@ import path from "node:path";
 import {esbuildGlobalImportPlugin} from "../utils/esbuild-util.js";
 import Device from "./Device.js";
 import {stringChunkify} from "../utils/js-util.js";
+import {getDirname} from "../utils/node-util.js";
+
+const __dirname=getDirname(import.meta.url);
 
 export default class PreabrainCli {
     init(options) {
@@ -44,34 +47,35 @@ export default class PreabrainCli {
 
     async deploy(options) {
         this.init(options);
-        await this.stop(options);
 
         console.log(`Deploy: ${options.file}`);
-        const result = await esbuild.build({ // entryPoints instead...
+
+        let jsxRuntimeFn=path.join(__dirname,"../ui/jsx-runtime.js");
+        let peabrainExportsFn=path.join(__dirname,"../exports/exports.js");
+        const result = await esbuild.build({
             entryPoints: [options.file],
             jsx: "automatic",
-            jsxImportSource: "canopener",
+            jsxImportSource: "peabrian-jsx",
             minify: true,
             bundle: true,
-            write: false,        // <-- critical
-            platform: "neutral",// or "node", "browser"
-            //format: "esm",       // or "cjs"
-            format: "iife",       // or "cjs"
+            write: false,
+            platform: "neutral",
+            //format: "esm",
+            format: "iife",
             conditions: ["mcu", "import", "default"],
-            plugins: [
-                esbuildGlobalImportPlugin({packageName: "canopener", names: [
-                    "RemoteDevice",
-                    "MasterDevice",
-                    "EventEmitter",
-                    "awaitEvent"
-                ]})
-            ]
+            alias: {
+                "peabrian-jsx/jsx-runtime": jsxRuntimeFn,
+                "peabrian-jsx/jsx-dev-runtime": jsxRuntimeFn,
+                "peabrain": peabrainExportsFn
+            }
         });
 
         let source=new TextDecoder("utf-8").decode(result.outputFiles[0].contents);
         //console.log(source);
 
         console.log(`Size: ${source.length} bytes`);
+        await this.stop(options);
+
         //let device=this.getDevice(options);
         let contents=stringChunkify(source,64);
         let fid=await this.device.fileOpen("/boot.js", "w");

@@ -19,6 +19,7 @@ private:
     JSValue displaySetCursor(int argc, JSValueConst *argv);
     JSValue setButtonFunc(int argc, JSValueConst *argv);
     JSValue setEncoderFunc(int argc, JSValueConst *argv);
+    JSValue getEncoderValue(int argc, JSValueConst *argv);
 
     Encoder encoder;
     DebouncePin button;

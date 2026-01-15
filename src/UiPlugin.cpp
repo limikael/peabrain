@@ -10,7 +10,8 @@ UiPlugin::UiPlugin():
 
 void UiPlugin::begin() {
 	Wire.begin(8, 9); 
-	Wire.setClock(100000);
+	//Wire.setClock(100000);
+    Wire.setClock(400000);
     lcd.init();
     lcd.backlight();
     lcd.clear();
@@ -30,6 +31,7 @@ void UiPlugin::init() {
 	jsEngine->addGlobal("displaySetCursor",jsEngine->newMethod(this,&UiPlugin::displaySetCursor,2));
     jsEngine->addGlobal("setEncoderFunc",jsEngine->newMethod(this,&UiPlugin::setEncoderFunc,1));
     jsEngine->addGlobal("setButtonFunc",jsEngine->newMethod(this,&UiPlugin::setButtonFunc,1));
+    jsEngine->addGlobal("getEncoderValue",jsEngine->newMethod(this,&UiPlugin::getEncoderValue,0));
 }
 
 void UiPlugin::loop() {
@@ -109,4 +111,9 @@ JSValue UiPlugin::setEncoderFunc(int argc, JSValueConst *argv) {
     return JS_UNDEFINED;
 }
 
+JSValue UiPlugin::getEncoderValue(int argc, JSValueConst *argv) {
+    if (argc!=0)
+        return JS_ThrowTypeError(jsEngine->getContext(), "wrong number of arguments");
 
+    return JS_NewInt32(jsEngine->getContext(),encoder.getValue());
+}

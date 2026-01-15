@@ -4,6 +4,8 @@ setButtonFunc(()=>{
 
 setEncoderFunc(enc=>{
 	console.log("enc: "+enc)
+	displaySetCursor(0,0);
+	displayWrite("Enc: "+enc+" "+getEncoderValue()+"   ");
 });
 
 waitFor(async ()=>{
@@ -15,3 +17,5 @@ waitFor(async ()=>{
 	displaySetCursor(0,0);
 	displayWrite("Started...         ");
 });
+
+//console.log("hello hello");

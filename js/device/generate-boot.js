@@ -2,17 +2,14 @@
 import * as esbuild from "esbuild";
 import fs from "node:fs";
 
-//    "build:boot": "esbuild --bundle --conditions=mcu --outfile=target/boot.js api/boot.js && xxd -i -n boot_js target/boot.js > src/boot_js.c",
-
-
 const result = await esbuild.build({
 	entryPoints: ["./js/device/boot.js"],
     minify: true,
     bundle: true,
     write: false,        // <-- critical
     platform: "neutral",// or "node", "browser"
-    format: "esm",       // or "cjs"
-    //format: "iife",       // or "cjs"
+    format: "iife",
+    //format: "esm", // should probably to esm, but not exactly shure why...
     conditions: ["mcu", "import", "default"]
 });
 
