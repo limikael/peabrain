@@ -3,7 +3,7 @@ import {renderController, Menu} from "peabrain";
 function App() {
 	return (
 		<Menu title="Flatpak">
-			<Menu title="Start Que Job">
+			<Menu title="Start Queued Job">
 				<Menu title="Job #123"/>
 				<Menu title="Job #124"/>
 				<Menu title="Job #125"/>

@@ -92,16 +92,6 @@ JSValue UiPlugin::displayUpdate(int argc, JSValueConst *argv) {
 
     lcdController.update(s);
 
-    /*for (int i=0; i<4; i++) {
-        char row[21];
-        memcpy(row,&s[i*20],20);
-        row[20]='\0';
-        lcd.setCursor(0,i);
-        lcd.print(row);
-    }*/
-
-    //lcd.print(s);
-
     JS_FreeCString(jsEngine->getContext(),s);
 
     return JS_UNDEFINED;
