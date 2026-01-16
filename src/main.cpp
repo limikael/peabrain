@@ -6,7 +6,7 @@
 #include "SPIFFS.h"
 
 JsEngine js(Serial);
-//CanPlugin can(5,4);
+CanPlugin can(5,4);
 UiPlugin ui;
 
 void myTask(void *arg) {
@@ -19,7 +19,7 @@ void myTask(void *arg) {
 void setup() {
     ui.begin();
 
-    //js.addPlugin(&can);
+    js.addPlugin(&can);
     js.addPlugin(&ui);
 
 	/*pinMode(8,OUTPUT);

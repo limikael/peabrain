@@ -10,12 +10,14 @@ program
     .requiredOption('-o, --output <path>', 'Output file')
     .option('-p, --prefix <path>', 'Prefix for generated symbols')
     .option('-I, --include <path>', 'Include dir where to save include file')
+    .option('-c, --feature-check <ifdef>', 'Include #ifdef feature check')
     .action(async (file, options)=>{
     	await peabindGen({
     		descriptionFn: file,
     		outputFn: options.output,
     		prefix: options.prefix,
-            includeDir: options.include
+            includeDir: options.include,
+            featureCheck: options.featureCheck
     	});
     });
 

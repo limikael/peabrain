@@ -344,11 +344,12 @@ function autoIndent(text, indentSize=4) {
 }
 
 export class Binding {
-    constructor({descriptionFn, outputFn, prefix, includeDir}) {
+    constructor({descriptionFn, outputFn, prefix, includeDir, featureCheck}) {
         this.descriptionFn=descriptionFn;
         this.outputFn=outputFn;
         this.prefix=prefix;
         this.includeDir=includeDir;
+        this.featureCheck=featureCheck;
 
         this.basename=path.parse(this.outputFn).name;
         if (!this.includeDir)
@@ -413,12 +414,18 @@ export class Binding {
     }
 
     async generate() {
+        console.log("****** feature check: "+this.featureCheck);
+
         await this.init();
 
         this.declarationSource="";
         this.definitionSource="";
 
         let source=autoIndent(`
+            ${this.featureCheck?`
+                #ifdef ${this.featureCheck}
+            `:""}
+
             extern "C" {
             #include "quickjs.h"
             }
@@ -456,12 +463,20 @@ export class Binding {
             ${this.getClassExports().map(x=>x.getAssignerImplementation()).join("\n")}
 
             ${this.getEndNamespace()}
+
+            ${this.featureCheck?`
+                #endif // ${this.featureCheck}
+            `:""}
+
         `);
 
         await fsp.writeFile(this.outputFn,source);
 
         let includeSource=autoIndent(`
             #pragma once
+            ${this.featureCheck?`
+                #ifdef ${this.featureCheck}
+            `:""}
             extern "C" {
             #include "quickjs.h"
             }
@@ -474,6 +489,9 @@ export class Binding {
             ${this.getClassExports().map(x=>x.getAssignerDeclaration()).join("\n")}
 
             ${this.getEndNamespace()}
+            ${this.featureCheck?`
+                #endif // ${this.featureCheck}
+            `:""}
         `);
 
         await fsp.writeFile(this.includeFn,includeSource);

@@ -1,4 +1,5 @@
 #include "JsEngine.h"
+#include <Arduino.h>
 
 extern const char boot_js[];
 //extern const unsigned int boot_js_len;
@@ -163,23 +164,29 @@ void JsEngine::reset() {
     JS_FreeValue(ctx, val);
     JS_RunGC(rt);
 
-    if (JS_IsUndefined(bootError) && runEnabled) {
-        File f = SPIFFS.open("/boot.js", FILE_READ);
-        if (f) {
-            String content = f.readString();
-            f.close();
+    if (::digitalRead(10)) {
+        if (JS_IsUndefined(bootError) && runEnabled) {
+            File f = SPIFFS.open("/boot.js", FILE_READ);
+            if (f) {
+                String content = f.readString();
+                f.close();
 
-            int len=strlen(content.c_str());
-            stream.printf("running program...\n");
-            JSValue bootval=JS_Eval(ctx, content.c_str(), len, "program", JS_EVAL_TYPE_GLOBAL);
-            if (JS_IsException(bootval)) {
-                bootError=getExceptionMessage();
-                stream.printf("Boot error!\n");
-                printJsValue(bootError);
+                int len=strlen(content.c_str());
+                stream.printf("running program...\n");
+                JSValue bootval=JS_Eval(ctx, content.c_str(), len, "program", JS_EVAL_TYPE_GLOBAL);
+                if (JS_IsException(bootval)) {
+                    bootError=getExceptionMessage();
+                    stream.printf("Boot error!\n");
+                    printJsValue(bootError);
+                }
+
+                JS_FreeValue(ctx,bootval);
             }
-
-            JS_FreeValue(ctx,bootval);
         }
+    }
+
+    else {
+        stream.printf("**** skipping boot due to pin...\n");
     }
 
     addGlobal("bootError",JS_DupValue(ctx,bootError));

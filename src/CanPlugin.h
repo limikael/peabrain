@@ -16,5 +16,6 @@ private:
 	JsEngine* jsEngine;
 	JSValue canWrite(int argc, JSValueConst *argv);
 	JSValue setCanMessageFunc(int argc, JSValueConst *argv);
+	void handleFrame(cof_t *frame);
 	JSValue canMessageFunc;
 };
