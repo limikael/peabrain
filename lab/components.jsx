@@ -4,11 +4,20 @@ export function useCanOpenObject(devId, index, subIndex) {
 	return global.getMasterDevice().getRemoteDevice(devId).at(index,subIndex);
 }
 
-export function ObjectEditor({name, title, devId, index, subIndex, min, max, step}) {
+export function ObjectEditor({name, title, devId, index, subIndex, min, max, step, address}) {
+	if (!min)
+		min=0;
+
+	if (address)
+		[devId,index,subIndex]=address;
+
 	let back=useBack();
 	useEncoderButton(()=>back());
 	let delta=useEncoderDelta();
 	let entry=useCanOpenObject(devId,index,subIndex);
+
+	if (!name)
+		name=title;
 
 	if (!step)
 		step=1;

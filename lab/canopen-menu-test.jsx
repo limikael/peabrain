@@ -15,9 +15,7 @@ function App() {
 			<Menu title="Status">
 			</Menu>
 			<Menu title="Test">
-				<ObjectEditor name="Blink" title="Blink"
-					devId={3} index={0x2000} subIndex={0}
-					min={0} max={1}/>
+				<ObjectEditor title="Blink" address={[3,0x2000,0]} max={1}/>
 				<Menu title="Jog Rail Axis"/>
 				<Menu title="Jog Vert. Axis"/>
 			</Menu>
