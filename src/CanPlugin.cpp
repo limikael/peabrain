@@ -72,6 +72,8 @@ void CanPlugin::close() {
 
     JS_FreeValue(jsEngine->getContext(),canMessageFunc);
     canMessageFunc=JS_UNDEFINED;
+
+    canopener_quickjs_exit(jsEngine->getContext());
 }
 
 /*JSValue CanPlugin::canWrite(int argc, JSValueConst *argv) {

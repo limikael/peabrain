@@ -40,24 +40,22 @@ global.getMasterDevice=()=>{
 	return global.__instance_MasterDevice;
 }
 
-RemoteDevice.prototype.flush=async function() {
+RemoteDevice.prototype.flush=function() {
 	//console.log("flushing, id="+this.getNodeId()+" gen="+this.getGeneration()+" cgen="+this.getCommitGeneration());
 	let generation=this.getGeneration();
 	if (this.getCommitGeneration()==generation)
 		return;
 
 	return new Promise(resolve=>{
-		let obj={};
-		obj.check=()=>{
-			//console.log("***** check!!!");
+		//console.log("******* will flush...");
+		let check=()=>{
 			if (this.getCommitGeneration()==generation) {
-				this.offCommitGenerationChange(obj.handle);
-				unref(obj);
+				this.off("commitGenerationChange",check);
 				resolve();
 			}
+			//console.log("checking...");
 		}
 
-		obj.handle=this.onCommitGenerationChange(obj.check);
-		ref(obj);
+		this.on("commitGenerationChange",check);
 	});
 };

@@ -29,39 +29,30 @@ function App() {
 }
 
 let master=getMasterDevice();
-global.dev=master.createRemoteDevice(3);
-dev.insert(0x2000,0);
+let blinkDevice=master.createRemoteDevice(3);
+blinkDevice.insert(0x2000,0);
 
-global.dev2=master.createRemoteDevice(4);
-dev2.insert(0x2000,0);
-dev2.insert(0x6400,1);
-dev2.insert(0x6400,2);
-dev2.insert(0x6400,3);
-dev2.insert(0x6400,4);
+let gpioDevice=master.createRemoteDevice(4);
+gpioDevice.insert(0x2000,0);
+gpioDevice.insert(0x6400,1);
+gpioDevice.insert(0x6400,2);
+gpioDevice.insert(0x6400,3);
+gpioDevice.insert(0x6400,4);
 
 renderController(<App/>);
 
 waitFor(async ()=>{
-	console.log("init!");
-
-	dev2.at(0x6400,1).subscribe(1);
-	await dev2.flush();
-
-	/*dev.at(0x2000,0).set(1);
-	dev.at(0x2000,0).set(2);
-	dev.at(0x2000,0).set(3);
-	await dev.flush();*/
-	//await dev2.flush();*/
-
-	console.log("flushed...");
+	gpioDevice.at(0x6400,1).subscribe(1);
+	gpioDevice.at(0x6400,3).subscribe(2);
+	await gpioDevice.flush();
 });
 
-global.handleChange=()=>{
-	console.log("val: "+dev2.at(0x6400,1).get());
-}
+gpioDevice.at(0x6400,1).on("change",()=>{
+	if (!gpioDevice.at(0x6400,1).get())
+		blinkDevice.at(0x2000,0).set(1);
+});
 
-dev2.at(0x6400,1).onChange(global.handleChange);
-
-/*setInterval(()=>{
-	console.log("val: "+dev2.at(0x6400,1).get());
-},1000);*/
+gpioDevice.at(0x6400,3).on("change",()=>{
+	if (!gpioDevice.at(0x6400,3).get())
+		blinkDevice.at(0x2000,0).set(0);
+});
