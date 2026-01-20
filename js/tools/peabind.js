@@ -246,13 +246,17 @@ class Declaration {
                     JS_FreeValue(ctx,ret);
                 });
 
-                ${this.binding.prefix}listener_t *l=new ${this.binding.prefix}listener_t {
+                ${this.binding.prefix}listener_t *listener=new ${this.binding.prefix}listener_t {
                     .dispatcher=dispatcher,
                     .id=id
                 };
 
+                ${this.binding.prefix}listeners.push_back(listener);
+
                 dispatcher->setIdentity(id,identity);
-                dispatcher->setDestructor(id,[ctx, fnDup]() {
+                dispatcher->setDestructor(id,[ctx, fnDup, listener]() {
+                    ${this.binding.prefix}listeners.erase(std::remove(${this.binding.prefix}listeners.begin(), ${this.binding.prefix}listeners.end(), listener), ${this.binding.prefix}listeners.end());
+                    delete listener;
                     JS_FreeValue(ctx,fnDup);
                 });
 
@@ -552,6 +556,7 @@ export class Binding {
             #include <string>
             #include <cstdlib>
             #include <stdexcept>
+            #include <algorithm>
 
             ${this.description.include.map(inc=>`#include "${inc}"`).join("\n")}
             ${this.description.namespace.map(ns=>`using namespace ${ns};`).join("\n")}
@@ -568,7 +573,7 @@ export class Binding {
                 int id;
             } ${this.prefix}listener_t;
 
-            std::vector<${this.prefix}listener_t> ${this.prefix}listeners;
+            std::vector<${this.prefix}listener_t *> ${this.prefix}listeners;
 
             ${this.prefix}opaque_t* ${this.prefix}opaque_create(void *instance, bool owned) {
                 ${this.prefix}opaque_t* opaque=(${this.prefix}opaque_t*)malloc(sizeof(${this.prefix}opaque_t));
@@ -578,13 +583,21 @@ export class Binding {
             }
 
             ${this.exports.map(exp=>exp.getTopLevelForward()).join("\n")}
-
             ${this.exports.map(exp=>exp.getTopLevelDefinition()).join("\n")}
 
             void ${this.prefix}init(JSContext *ctx) {
                 JSValue global=JS_GetGlobalObject(ctx);
                 ${this.exports.map(x=>x.getTopLevelRegistration()).join("\n")}
                 JS_FreeValue(ctx,global);
+            }
+
+            void ${this.prefix}exit(JSContext *ctx) {
+                //printf("exiting, listeners=%d\\n",${this.prefix}listeners.size());
+
+                while (${this.prefix}listeners.size())
+                    ${this.prefix}listeners[0]->dispatcher->off(${this.prefix}listeners[0]->id);
+
+                //printf("exiting, listeners=%d\\n",${this.prefix}listeners.size());
             }
 
             ${this.getClassExports().map(x=>x.getAssignerImplementation()).join("\n")}
@@ -613,6 +626,7 @@ export class Binding {
             ${this.getBeginNamespace()}
 
             void ${this.prefix}init(JSContext *ctx);
+            void ${this.prefix}exit(JSContext *ctx);
             ${this.getClassExports().map(x=>x.getAssignerDeclaration()).join("\n")}
 
             ${this.getEndNamespace()}

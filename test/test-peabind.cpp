@@ -181,16 +181,19 @@ void test_peabind_events() {
 
     std::string res=runcode(ctx,"\
         let t=createTestClass(5); \
-        let v; \
+        let v,u; \
         let f=()=>{ v=789; }; \
+        t.on(\"change\",()=>{ u=123; }); \
         t.on(\"change\",f); \
         t.emitChangeEvent(); \
-        /*t.off(\"change\");*/ \
-        [v]; \
+        t.off(\"change\",f); \
+        [v,u]; \
     ");
 
-    //assert(res=="789");
-    printf("ret: %s\n",res.c_str());
+    assert(res=="789,123");
+    //printf("ret: %s\n",res.c_str());
+
+    pea_exit(ctx);
 
     JS_RunGC(rt);
     JS_FreeContext(ctx);

@@ -4,6 +4,7 @@ extern "C" {
 #include <string>
 #include <cstdlib>
 #include <stdexcept>
+#include <algorithm>
 #include "mockapi.h"
 typedef struct {
     void *instance;
@@ -13,7 +14,7 @@ typedef struct {
     Dispatcher<> *dispatcher;
     int id;
 } pea_listener_t;
-std::vector<pea_listener_t> pea_listeners;
+std::vector<pea_listener_t *> pea_listeners;
 pea_opaque_t* pea_opaque_create(void *instance, bool owned) {
     pea_opaque_t* opaque=(pea_opaque_t*)malloc(sizeof(pea_opaque_t));
     opaque->instance=instance;
@@ -145,12 +146,15 @@ static JSValue pea_TestClass_on(JSContext *ctx, JSValueConst thisobj, int argc, 
         JSValue ret=JS_Call(ctx, fnDup, JS_UNDEFINED, 0, NULL);
         JS_FreeValue(ctx,ret);
     });
-    pea_listener_t *l=new pea_listener_t {
+    pea_listener_t *listener=new pea_listener_t {
         .dispatcher=dispatcher,
         .id=id
     };
+    pea_listeners.push_back(listener);
     dispatcher->setIdentity(id,identity);
-    dispatcher->setDestructor(id,[ctx, fnDup]() {
+    dispatcher->setDestructor(id,[ctx, fnDup, listener]() {
+        pea_listeners.erase(std::remove(pea_listeners.begin(), pea_listeners.end(), listener), pea_listeners.end());
+        delete listener;
         JS_FreeValue(ctx,fnDup);
     });
     return JS_UNDEFINED;
@@ -266,6 +270,12 @@ void pea_init(JSContext *ctx) {
     JS_SetPropertyStr(ctx,global,"AnotherTest",AnotherTest_ctorval);
     JS_SetPropertyStr(ctx,AnotherTest_proto,"getTestClass",JS_NewCFunction(ctx, pea_AnotherTest_getTestClass,"getTestClass",0));
     JS_FreeValue(ctx,global);
+}
+void pea_exit(JSContext *ctx) {
+    //printf("exiting, listeners=%d\n",pea_listeners.size());
+    while (pea_listeners.size())
+    pea_listeners[0]->dispatcher->off(pea_listeners[0]->id);
+    //printf("exiting, listeners=%d\n",pea_listeners.size());
 }
 void pea_add_TestClass(JSContext *ctx, const char *name, TestClass* val) {
     JSValue global=JS_GetGlobalObject(ctx);

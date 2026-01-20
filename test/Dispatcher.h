@@ -16,7 +16,7 @@ class Dispatcher {
 
 public:
     ~Dispatcher() {
-        printf("destructing dispatcher...\n");
+        /*printf("destructing dispatcher...\n");*/
         off();
     }
 
