@@ -15,7 +15,8 @@ function App() {
 			<Menu title="Status">
 			</Menu>
 			<Menu title="Test">
-				<ObjectEditor title="Blink" address={[3,0x2000,0]} max={1}/>
+				<ObjectEditor title="Blink 1" address={[3,0x2000,0]} max={1}/>
+				<ObjectEditor title="Blink 2" address={[4,0x2000,0]} max={1}/>
 				<Menu title="Jog Rail Axis"/>
 				<Menu title="Jog Vert. Axis"/>
 			</Menu>
@@ -28,7 +29,39 @@ function App() {
 }
 
 let master=getMasterDevice();
-let dev=master.createRemoteDevice(3);
+global.dev=master.createRemoteDevice(3);
 dev.insert(0x2000,0);
 
+global.dev2=master.createRemoteDevice(4);
+dev2.insert(0x2000,0);
+dev2.insert(0x6400,1);
+dev2.insert(0x6400,2);
+dev2.insert(0x6400,3);
+dev2.insert(0x6400,4);
+
 renderController(<App/>);
+
+waitFor(async ()=>{
+	console.log("init!");
+
+	dev2.at(0x6400,1).subscribe(1);
+	await dev2.flush();
+
+	/*dev.at(0x2000,0).set(1);
+	dev.at(0x2000,0).set(2);
+	dev.at(0x2000,0).set(3);
+	await dev.flush();*/
+	//await dev2.flush();*/
+
+	console.log("flushed...");
+});
+
+global.handleChange=()=>{
+	console.log("val: "+dev2.at(0x6400,1).get());
+}
+
+dev2.at(0x6400,1).onChange(global.handleChange);
+
+/*setInterval(()=>{
+	console.log("val: "+dev2.at(0x6400,1).get());
+},1000);*/

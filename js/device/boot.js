@@ -1,6 +1,10 @@
 import Repl from "./Repl.js";
 import EventEmitter from "../utils/EventEmitter.js";
 
+global._refRegistry = new Set();
+global.ref=obj=>{ global._refRegistry.add(obj); };
+global.unref=obj=>{ global._refRegistry.delete(obj); };
+
 global.EventEmitter=EventEmitter;
 
 global.serial=new EventEmitter();
@@ -16,15 +20,17 @@ global.waitFor=async (p)=>{
 	if (typeof p=="function")
 		p=p();
 
-	global.gc();
+	//global.gc();
 	setBootInProgress(true);
-	global.gc();
+	//global.gc();
 
 	await p;
 
-	global.gc();
+	console.log("boot promise returned...");
+
+	//global.gc();
 	setBootInProgress(false);
-	global.gc();
+	//global.gc();
 }
 
 global.getMasterDevice=()=>{
@@ -33,3 +39,25 @@ global.getMasterDevice=()=>{
 
 	return global.__instance_MasterDevice;
 }
+
+RemoteDevice.prototype.flush=async function() {
+	//console.log("flushing, id="+this.getNodeId()+" gen="+this.getGeneration()+" cgen="+this.getCommitGeneration());
+	let generation=this.getGeneration();
+	if (this.getCommitGeneration()==generation)
+		return;
+
+	return new Promise(resolve=>{
+		let obj={};
+		obj.check=()=>{
+			//console.log("***** check!!!");
+			if (this.getCommitGeneration()==generation) {
+				this.offCommitGenerationChange(obj.handle);
+				unref(obj);
+				resolve();
+			}
+		}
+
+		obj.handle=this.onCommitGenerationChange(obj.check);
+		ref(obj);
+	});
+};

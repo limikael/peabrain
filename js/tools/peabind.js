@@ -58,6 +58,10 @@ class Declaration {
                 return `std::string ${this.name};\n`;
                 break;
 
+            case "function":
+                return `std::function<void()> ${this.name};\n`;
+                break;
+
             default:
                 let decl=this.binding.getClassDeclarationByName(this.type);
                 switch (this.ref) {
@@ -87,6 +91,26 @@ class Declaration {
                     JS_FreeCString(ctx,${this.name}_);
                 `;
 
+            case "function":
+                return `
+                    JSValue ${this.name}_=${jsValueExpr};
+                    ${this.name}=[ctx,${this.name}_]() {
+                        JSValue ret=JS_Call(ctx,${this.name}_,JS_UNDEFINED,0,NULL);
+                        /*if (JS_IsException(ret)) {
+                            JSValue err=jsEngine->getExceptionMessage();
+                            jsEngine->printJsValue(err);
+                            JS_FreeValue(ctx,err);
+                        }*/
+
+                        if (JS_IsException(ret)) {
+                            throw std::runtime_error("Javascript callback threw error.");
+                        }
+
+                        JS_FreeValue(ctx,ret);
+                    };
+                `;
+                break;
+
             default:
                 let decl=this.binding.getClassDeclarationByName(this.type);
                 switch (this.ref) {
@@ -115,6 +139,10 @@ class Declaration {
 
             case "string":
                 return `${jsValueVar}=JS_NewString(ctx,${this.name}.c_str());\n`;
+
+            case "function":
+                throw new Error("pack!!!");
+                break;
 
             default:
                 let decl=this.binding.getClassDeclarationByName(this.type);
@@ -414,7 +442,7 @@ export class Binding {
     }
 
     async generate() {
-        console.log("****** feature check: "+this.featureCheck);
+        //console.log("****** feature check: "+this.featureCheck);
 
         await this.init();
 
@@ -432,6 +460,7 @@ export class Binding {
 
             #include <string>
             #include <cstdlib>
+            #include <stdexcept>
 
             ${this.description.include.map(inc=>`#include "${inc}"`).join("\n")}
             ${this.description.namespace.map(ns=>`using namespace ${ns};`).join("\n")}

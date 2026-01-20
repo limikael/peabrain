@@ -7,6 +7,7 @@ void test_peabind_classes();
 void test_peabind_references();
 void test_peabind_borrowed_references();
 void test_peabind_assigner();
+void test_peabind_callbacks();
 
 int main() {
 	printf("Running tests...\n");
@@ -18,6 +19,7 @@ int main() {
 	test_peabind_references();
 	test_peabind_borrowed_references();
 	test_peabind_assigner();
+	test_peabind_callbacks();
 
 	return 0;
 }

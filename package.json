@@ -6,6 +6,8 @@
   "scripts": {
     "build:boot": "./js/device/generate-boot.js",
     "flash": "pnpm build:boot && pio run --target=upload",
+    "peabrain": "peabrain deploy --port=/dev/ttyESP-50:78:7D:8F:D7:D0 lab/canopen-menu-test.jsx",
+    "lab": "pnpm flash && pnpm peabrain",
     "test": "make -j4 test"
   },
   "bin": {

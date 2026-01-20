@@ -39,6 +39,10 @@
 				{
 					"name": "setVal",
 					"args": ["int"]
+				},
+				{
+					"name": "callFunc",
+					"args": ["function"]
 				}
 			]
 		},

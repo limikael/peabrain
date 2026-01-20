@@ -2,6 +2,7 @@
 
 #include <string>
 #include <cstdio>
+#include <functional>
 
 void hellovoid();
 int helloint();
@@ -15,6 +16,7 @@ public:
 	~TestClass() { /*printf("destructing!!!\n");*/ }
 	int getVal() { return val; }
 	void setVal(int val_) { val=val_; }
+	void callFunc(std::function<void()> fn) { fn(); }
 private:
 	int val;
 };

@@ -3,6 +3,7 @@ extern "C" {
 }
 #include <string>
 #include <cstdlib>
+#include <stdexcept>
 #include "mockapi.h"
 typedef struct {
     void *instance;
@@ -95,6 +96,28 @@ static JSValue pea_TestClass_setVal(JSContext *ctx, JSValueConst thisobj, int ar
     instance->setVal(arg_0);
     return JS_UNDEFINED;
 }
+static JSValue pea_TestClass_callFunc(JSContext *ctx, JSValueConst thisobj, int argc, JSValueConst *argv) {
+    if (argc!=1) return JS_ThrowTypeError(ctx, "wrong arg count");
+    std::function<void()> arg_0;
+    JSValue arg_0_=argv[0];
+    arg_0=[ctx,arg_0_]() {
+        JSValue ret=JS_Call(ctx,arg_0_,JS_UNDEFINED,0,NULL);
+        /*if (JS_IsException(ret)) {
+            JSValue err=jsEngine->getExceptionMessage();
+            jsEngine->printJsValue(err);
+            JS_FreeValue(ctx,err);
+        }*/
+        if (JS_IsException(ret)) {
+            throw std::runtime_error("Javascript callback threw error.");
+        }
+        JS_FreeValue(ctx,ret);
+    };
+    pea_opaque_t* opaque=(pea_opaque_t*)JS_GetOpaque(thisobj,pea_TestClass_classid);
+    //TestClass* instance=(TestClass*)JS_GetOpaque(thisobj,pea_TestClass_classid);
+    TestClass* instance=(TestClass*)opaque->instance;
+    instance->callFunc(arg_0);
+    return JS_UNDEFINED;
+}
 static JSValue pea_createTestClass(JSContext *ctx, JSValueConst thisobj, int argc, JSValueConst *argv) {
     if (argc!=1) return JS_ThrowTypeError(ctx, "wrong arg count");
     int32_t arg_0;
@@ -172,6 +195,7 @@ void pea_init(JSContext *ctx) {
     JS_SetPropertyStr(ctx,global,"TestClass",TestClass_ctorval);
     JS_SetPropertyStr(ctx,TestClass_proto,"getVal",JS_NewCFunction(ctx, pea_TestClass_getVal,"getVal",0));
     JS_SetPropertyStr(ctx,TestClass_proto,"setVal",JS_NewCFunction(ctx, pea_TestClass_setVal,"setVal",0));
+    JS_SetPropertyStr(ctx,TestClass_proto,"callFunc",JS_NewCFunction(ctx, pea_TestClass_callFunc,"callFunc",0));
     JS_SetPropertyStr(ctx,global,"createTestClass",JS_NewCFunction(ctx,pea_createTestClass,"createTestClass",0));
     JS_SetPropertyStr(ctx,global,"getTestClassValue",JS_NewCFunction(ctx,pea_getTestClassValue,"getTestClassValue",0));
     JS_SetPropertyStr(ctx,global,"getTestClassValueRef",JS_NewCFunction(ctx,pea_getTestClassValueRef,"getTestClassValueRef",0));
