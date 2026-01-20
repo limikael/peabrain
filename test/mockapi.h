@@ -3,6 +3,7 @@
 #include <string>
 #include <cstdio>
 #include <functional>
+#include "Dispatcher.h"
 
 void hellovoid();
 int helloint();
@@ -12,11 +13,14 @@ std::string concat(std::string a, std::string b);
 class TestClass {
 public:
 	TestClass() {val=789;}
-	TestClass(int val_) { /*printf("constructing!!!\n");*/ val=val_; }
-	~TestClass() { /*printf("destructing!!!\n");*/ }
+	TestClass(int val_) { printf("constructing!!!\n"); val=val_; }
+	~TestClass() { printf("destructing!!!\n"); }
 	int getVal() { return val; }
 	void setVal(int val_) { val=val_; }
 	void callFunc(std::function<void()> fn) { fn(); }
+	Dispatcher<> changeDispatcher;
+	void emitChangeEvent() { changeDispatcher.emit(); }
+
 private:
 	int val;
 };

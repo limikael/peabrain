@@ -169,3 +169,30 @@ void test_peabind_callbacks() {
     JS_FreeContext(ctx);
     JS_FreeRuntime(rt);
 }
+
+void test_peabind_events() {
+    printf("- Peabind events...\n");
+
+    JSRuntime *rt = JS_NewRuntime();
+    JSContext *ctx = JS_NewContext(rt);
+
+    pea_init(ctx);
+    //pea_add_TestClass(ctx,"atest",new TestClass(567));
+
+    std::string res=runcode(ctx,"\
+        let t=createTestClass(5); \
+        let v; \
+        let f=()=>{ v=789; }; \
+        t.on(\"change\",f); \
+        t.emitChangeEvent(); \
+        /*t.off(\"change\");*/ \
+        [v]; \
+    ");
+
+    //assert(res=="789");
+    printf("ret: %s\n",res.c_str());
+
+    JS_RunGC(rt);
+    JS_FreeContext(ctx);
+    JS_FreeRuntime(rt);
+}

@@ -43,6 +43,15 @@
 				{
 					"name": "callFunc",
 					"args": ["function"]
+				},
+				{
+					"name": "emitChangeEvent",
+				}
+			],
+			"events": [
+				{
+					"name": "change",
+					"dispatcher": "changeDispatcher"
 				}
 			]
 		},

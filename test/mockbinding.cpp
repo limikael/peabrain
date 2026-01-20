@@ -9,6 +9,11 @@ typedef struct {
     void *instance;
     bool owned;
 } pea_opaque_t;
+typedef struct {
+    Dispatcher<> *dispatcher;
+    int id;
+} pea_listener_t;
+std::vector<pea_listener_t> pea_listeners;
 pea_opaque_t* pea_opaque_create(void *instance, bool owned) {
     pea_opaque_t* opaque=(pea_opaque_t*)malloc(sizeof(pea_opaque_t));
     opaque->instance=instance;
@@ -66,8 +71,6 @@ static JSValue pea_TestClass_ctor(JSContext *ctx, JSValueConst new_target, int a
     return obj;
 }
 static void pea_TestClass_finalizer(JSRuntime *rt, JSValue obj) {
-    //TestClass* instance=(TestClass*)JS_GetOpaque(obj,pea_TestClass_classid);
-    //delete instance;
     pea_opaque_t* opaque=(pea_opaque_t*)JS_GetOpaque(obj,pea_TestClass_classid);
     if (opaque->owned) {
         TestClass* instance=(TestClass*)opaque->instance;
@@ -118,6 +121,59 @@ static JSValue pea_TestClass_callFunc(JSContext *ctx, JSValueConst thisobj, int 
     instance->callFunc(arg_0);
     return JS_UNDEFINED;
 }
+static JSValue pea_TestClass_emitChangeEvent(JSContext *ctx, JSValueConst thisobj, int argc, JSValueConst *argv) {
+    if (argc!=0) return JS_ThrowTypeError(ctx, "wrong arg count");
+    pea_opaque_t* opaque=(pea_opaque_t*)JS_GetOpaque(thisobj,pea_TestClass_classid);
+    //TestClass* instance=(TestClass*)JS_GetOpaque(thisobj,pea_TestClass_classid);
+    TestClass* instance=(TestClass*)opaque->instance;
+    instance->emitChangeEvent();
+    return JS_UNDEFINED;
+}
+static JSValue pea_TestClass_on(JSContext *ctx, JSValueConst thisobj, int argc, JSValueConst *argv) {
+    if (argc!=2) return JS_ThrowTypeError(ctx, "wrong arg count");
+    pea_opaque_t* opaque=(pea_opaque_t*)JS_GetOpaque(thisobj,pea_TestClass_classid);
+    TestClass* instance=(TestClass*)opaque->instance;
+    const char *eventName=JS_ToCString(ctx,argv[0]);
+    Dispatcher<> *dispatcher;
+    if (!strcmp(eventName,"change")) dispatcher=&instance->changeDispatcher;
+    JS_FreeCString(ctx,eventName);
+    if (!dispatcher) return JS_ThrowTypeError(ctx, "unknown event");
+    void* identity=JS_VALUE_GET_PTR(argv[1]);
+    if (dispatcher->getIdByIdentity(identity)) return JS_UNDEFINED; // existing
+    JSValue fnDup=JS_DupValue(ctx,argv[1]);
+    int id=dispatcher->on([ctx, fnDup]() {
+        JSValue ret=JS_Call(ctx, fnDup, JS_UNDEFINED, 0, NULL);
+        JS_FreeValue(ctx,ret);
+    });
+    pea_listener_t *l=new pea_listener_t {
+        .dispatcher=dispatcher,
+        .id=id
+    };
+    dispatcher->setIdentity(id,identity);
+    dispatcher->setDestructor(id,[ctx, fnDup]() {
+        JS_FreeValue(ctx,fnDup);
+    });
+    return JS_UNDEFINED;
+}
+static JSValue pea_TestClass_off(JSContext *ctx, JSValueConst thisobj, int argc, JSValueConst *argv) {
+    if (argc>2 || argc<1) return JS_ThrowTypeError(ctx, "wrong arg count");
+    pea_opaque_t* opaque=(pea_opaque_t*)JS_GetOpaque(thisobj,pea_TestClass_classid);
+    TestClass* instance=(TestClass*)opaque->instance;
+    const char *eventName=JS_ToCString(ctx,argv[0]);
+    Dispatcher<> *dispatcher=nullptr;
+    if (!strcmp(eventName,"change")) dispatcher=&instance->changeDispatcher;
+    JS_FreeCString(ctx,eventName);
+    if (!dispatcher) return JS_ThrowTypeError(ctx, "unknown event");
+    if (argc==1) {
+        dispatcher->off();
+        return JS_UNDEFINED;
+    }
+    JSValueConst fn = argv[1];
+    void* identity = JS_VALUE_GET_PTR(fn);
+    int id=dispatcher->getIdByIdentity(identity);
+    if (id) dispatcher->off(id);
+    return JS_UNDEFINED;
+}
 static JSValue pea_createTestClass(JSContext *ctx, JSValueConst thisobj, int argc, JSValueConst *argv) {
     if (argc!=1) return JS_ThrowTypeError(ctx, "wrong arg count");
     int32_t arg_0;
@@ -158,8 +214,6 @@ static JSValue pea_AnotherTest_ctor(JSContext *ctx, JSValueConst new_target, int
     return obj;
 }
 static void pea_AnotherTest_finalizer(JSRuntime *rt, JSValue obj) {
-    //AnotherTest* instance=(AnotherTest*)JS_GetOpaque(obj,pea_AnotherTest_classid);
-    //delete instance;
     pea_opaque_t* opaque=(pea_opaque_t*)JS_GetOpaque(obj,pea_AnotherTest_classid);
     if (opaque->owned) {
         AnotherTest* instance=(AnotherTest*)opaque->instance;
@@ -196,6 +250,9 @@ void pea_init(JSContext *ctx) {
     JS_SetPropertyStr(ctx,TestClass_proto,"getVal",JS_NewCFunction(ctx, pea_TestClass_getVal,"getVal",0));
     JS_SetPropertyStr(ctx,TestClass_proto,"setVal",JS_NewCFunction(ctx, pea_TestClass_setVal,"setVal",0));
     JS_SetPropertyStr(ctx,TestClass_proto,"callFunc",JS_NewCFunction(ctx, pea_TestClass_callFunc,"callFunc",0));
+    JS_SetPropertyStr(ctx,TestClass_proto,"emitChangeEvent",JS_NewCFunction(ctx, pea_TestClass_emitChangeEvent,"emitChangeEvent",0));
+    JS_SetPropertyStr(ctx,TestClass_proto,"on",JS_NewCFunction(ctx, pea_TestClass_on,"on",2));
+    JS_SetPropertyStr(ctx,TestClass_proto,"off",JS_NewCFunction(ctx, pea_TestClass_off,"off",2));
     JS_SetPropertyStr(ctx,global,"createTestClass",JS_NewCFunction(ctx,pea_createTestClass,"createTestClass",0));
     JS_SetPropertyStr(ctx,global,"getTestClassValue",JS_NewCFunction(ctx,pea_getTestClassValue,"getTestClassValue",0));
     JS_SetPropertyStr(ctx,global,"getTestClassValueRef",JS_NewCFunction(ctx,pea_getTestClassValueRef,"getTestClassValueRef",0));

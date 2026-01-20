@@ -18,7 +18,7 @@ class Declaration {
         if (!this.type)
             this.type="void";
 
-        if (this.type=="function" || this.type=="class") {
+        if (this.type=="function" || this.type=="class") { // should also do events...
             if (!this.args)
                 this.args=[];
 
@@ -44,6 +44,15 @@ class Declaration {
                 class: this,
                 binding: this.binding,
                 type: "function",
+            }));
+
+            if (!this.events)
+                this.events=[];
+
+            this.events=this.events.map(e=>new Declaration(e,{
+                class: this,
+                binding: this.binding,
+                type: "event",
             }));
         }
     }
@@ -204,6 +213,81 @@ class Declaration {
         `;
     }
 
+    getEventComparision() {
+        return `
+            if (!strcmp(eventName,"${this.name}")) dispatcher=&instance->${this.dispatcher};
+        `;
+    }
+
+    getEventsDefinition() {
+        if (!this.events.length)
+            return "";
+
+        return `
+            static JSValue ${this.binding.prefix}${this.name}_on(JSContext *ctx, JSValueConst thisobj, int argc, JSValueConst *argv) {
+                if (argc!=2) return JS_ThrowTypeError(ctx, "wrong arg count");
+
+                ${this.binding.prefix}opaque_t* opaque=(${this.binding.prefix}opaque_t*)JS_GetOpaque(thisobj,${this.binding.prefix}${this.name}_classid);
+                ${this.name}* instance=(${this.name}*)opaque->instance;
+
+                const char *eventName=JS_ToCString(ctx,argv[0]);
+                Dispatcher<> *dispatcher;
+
+                ${this.events.map(e=>e.getEventComparision())}
+                JS_FreeCString(ctx,eventName);
+                if (!dispatcher) return JS_ThrowTypeError(ctx, "unknown event");
+
+                void* identity=JS_VALUE_GET_PTR(argv[1]);
+                if (dispatcher->getIdByIdentity(identity)) return JS_UNDEFINED; // existing
+
+                JSValue fnDup=JS_DupValue(ctx,argv[1]);
+                int id=dispatcher->on([ctx, fnDup]() {
+                    JSValue ret=JS_Call(ctx, fnDup, JS_UNDEFINED, 0, NULL);
+                    JS_FreeValue(ctx,ret);
+                });
+
+                ${this.binding.prefix}listener_t *l=new ${this.binding.prefix}listener_t {
+                    .dispatcher=dispatcher,
+                    .id=id
+                };
+
+                dispatcher->setIdentity(id,identity);
+                dispatcher->setDestructor(id,[ctx, fnDup]() {
+                    JS_FreeValue(ctx,fnDup);
+                });
+
+                return JS_UNDEFINED;
+            }
+
+            static JSValue ${this.binding.prefix}${this.name}_off(JSContext *ctx, JSValueConst thisobj, int argc, JSValueConst *argv) {
+                if (argc>2 || argc<1) return JS_ThrowTypeError(ctx, "wrong arg count");
+
+                ${this.binding.prefix}opaque_t* opaque=(${this.binding.prefix}opaque_t*)JS_GetOpaque(thisobj,${this.binding.prefix}${this.name}_classid);
+                ${this.name}* instance=(${this.name}*)opaque->instance;
+
+                const char *eventName=JS_ToCString(ctx,argv[0]);
+                Dispatcher<> *dispatcher=nullptr;
+
+                ${this.events.map(e=>e.getEventComparision())}
+                JS_FreeCString(ctx,eventName);
+                if (!dispatcher) return JS_ThrowTypeError(ctx, "unknown event");
+
+                if (argc==1) {
+                    dispatcher->off();
+                    return JS_UNDEFINED;
+                }
+
+                JSValueConst fn = argv[1];
+                void* identity = JS_VALUE_GET_PTR(fn);
+
+                int id=dispatcher->getIdByIdentity(identity);
+                if (id) dispatcher->off(id);
+
+                return JS_UNDEFINED;
+            }
+        `;
+    }
+
     getTopLevelDefinition() {
         switch (this.type) {
             case "function":
@@ -256,8 +340,6 @@ class Declaration {
                         `}
                     }
                     static void ${this.binding.prefix}${this.name}_finalizer(JSRuntime *rt, JSValue obj) {
-                        //${this.name}* instance=(${this.name}*)JS_GetOpaque(obj,${this.binding.prefix}${this.name}_classid);
-                        //delete instance;
                         ${this.binding.prefix}opaque_t* opaque=(${this.binding.prefix}opaque_t*)JS_GetOpaque(obj,${this.binding.prefix}${this.name}_classid);
                         if (opaque->owned) {
                             ${this.name}* instance=(${this.name}*)opaque->instance;
@@ -267,6 +349,8 @@ class Declaration {
                         free(opaque);
                     }
                     ${this.methods.map(m=>m.getTopLevelDefinition()).join("\n")}
+
+                    ${this.getEventsDefinition()}
                 `;
                 break;
 
@@ -311,6 +395,13 @@ class Declaration {
                 s+=this.methods.map(m=>`
                     JS_SetPropertyStr(ctx,${this.name}_proto,"${m.name}",JS_NewCFunction(ctx, ${this.binding.prefix}${this.name}_${m.name},"${m.name}",0));
                 `).join("\n");
+
+                if (this.events.length) {
+                    s+=`
+                        JS_SetPropertyStr(ctx,${this.name}_proto,"on",JS_NewCFunction(ctx, ${this.binding.prefix}${this.name}_on,"on",2));
+                        JS_SetPropertyStr(ctx,${this.name}_proto,"off",JS_NewCFunction(ctx, ${this.binding.prefix}${this.name}_off,"off",2));
+                    `;                    
+                }
 
                 return s;
                 break;
@@ -471,6 +562,13 @@ export class Binding {
                 void *instance;
                 bool owned;
             } ${this.prefix}opaque_t;
+
+            typedef struct {
+                Dispatcher<> *dispatcher;
+                int id;
+            } ${this.prefix}listener_t;
+
+            std::vector<${this.prefix}listener_t> ${this.prefix}listeners;
 
             ${this.prefix}opaque_t* ${this.prefix}opaque_create(void *instance, bool owned) {
                 ${this.prefix}opaque_t* opaque=(${this.prefix}opaque_t*)malloc(sizeof(${this.prefix}opaque_t));
