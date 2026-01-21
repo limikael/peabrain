@@ -37,6 +37,10 @@ export function List({title, items, onSelect}) {
 	return res;
 }
 
+export function MenuItem({children}) {
+	return children;
+}
+
 export function Menu({title, children}) {
 	let [selectedIndex,setSelectedIndex]=useState();
 	let back=useContext(BackContext);

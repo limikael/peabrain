@@ -26,7 +26,7 @@ global.waitFor=async (p)=>{
 
 	await p;
 
-	console.log("boot promise returned...");
+	console.log("Boot complete.");
 
 	//global.gc();
 	setBootInProgress(false);
@@ -49,7 +49,10 @@ RemoteDevice.prototype.flush=function() {
 	return new Promise(resolve=>{
 		//console.log("******* will flush...");
 		let check=()=>{
-			if (this.getCommitGeneration()==generation) {
+			//console.log("check... refreshing: "+this.isRefreshInProgress());
+
+			if (this.getCommitGeneration()>=generation &&
+					!this.isRefreshInProgress()) {
 				this.off("commitGenerationChange",check);
 				resolve();
 			}

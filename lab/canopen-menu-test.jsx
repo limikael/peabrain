@@ -1,5 +1,50 @@
-import {renderController, Menu} from "peabrain";
+import {renderController, Menu, MenuItem, useBack, useEncoderButton, useRef, useRefresh, useEffect,
+		useState} from "peabrain";
 import {ObjectEditor} from "./components.jsx";
+
+async function runCalibration({log}) {
+	await log("_ Calibration _______");
+	await log("Finding neg. stop...");
+
+	for (let i=1; i<=10; i++) {
+		await new Promise(r=>setTimeout(r,1000));
+		await log("Step "+i);
+	}
+}
+
+function Job({action}) {
+	let logItems=useRef([]);	
+	let refresh=useRefresh();
+	let [complete,setComplete]=useState();
+	let back=useBack();
+	useEncoderButton(()=>{
+		if (complete)
+			back();
+	});
+	useEffect(()=>{
+		async function log(s) {
+			logItems.current.push(s);
+			refresh();
+		}
+
+		action({log}).then(()=>{
+			while (logItems.current.length<2)
+				logItems.current.push("");
+
+			setComplete(true);
+		});
+	});
+
+	if (complete) {
+		return [
+			...logItems.current.slice(-2),
+			"",
+			"       [ Ok ]       "
+		];
+	}
+
+	return logItems.current.slice(-4);
+}
 
 function App() {
 	return (
@@ -17,11 +62,15 @@ function App() {
 			<Menu title="Test">
 				<ObjectEditor title="Blink 1" address={[3,0x2000,0]} max={1}/>
 				<ObjectEditor title="Blink 2" address={[4,0x2000,0]} max={1}/>
+				<ObjectEditor title="Switch 1" address={[4,0x6400,1]} max={1}/>
+				<ObjectEditor title="Switch 2" address={[4,0x6400,3]} max={1}/>
 				<Menu title="Jog Rail Axis"/>
 				<Menu title="Jog Vert. Axis"/>
 			</Menu>
 			<Menu title="Settings">
-				<Menu title="Wifi Settings"/>
+				<MenuItem title="Calibration">
+					<Job action={runCalibration}/>
+				</MenuItem>
 				<Menu title="Device Homing"/>
 			</Menu>
 		</Menu>
@@ -42,8 +91,8 @@ gpioDevice.insert(0x6400,4);
 renderController(<App/>);
 
 waitFor(async ()=>{
-	gpioDevice.at(0x6400,1).subscribe(1);
-	gpioDevice.at(0x6400,3).subscribe(2);
+	gpioDevice.at(0x6400,1).subscribe(1).refresh();
+	gpioDevice.at(0x6400,3).subscribe(2).refresh();
 	await gpioDevice.flush();
 });
 

@@ -1,7 +1,21 @@
-import {useBack, useEncoderButton, useEncoderDelta} from "peabrain";
+import {useBack, useEncoderButton, useEncoderDelta, useEffect, useRefresh} from "peabrain";
 
 export function useCanOpenObject(devId, index, subIndex) {
-	return global.getMasterDevice().getRemoteDevice(devId).at(index,subIndex);
+	let refresh=useRefresh();
+	let o=global.getMasterDevice().getRemoteDevice(devId).at(index,subIndex);
+	useEffect(()=>{
+		function handleChange() {
+			//console.log("change!!!");
+			refresh();
+		}
+
+		o.on("change",handleChange);
+		return ()=>{
+			o.off("change",handleChange);
+		}
+	});
+
+	return o;
 }
 
 export function ObjectEditor({name, title, devId, index, subIndex, min, max, step, address}) {

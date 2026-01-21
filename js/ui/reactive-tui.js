@@ -1,5 +1,35 @@
 import EventEmitter from "../utils/EventEmitter.js";
 
+export function useEffect(fn) {
+	let cleanup=useRef();
+	useMount(()=>{
+		cleanup.current=fn();
+	});
+	useUnmount(cleanup.current);
+}
+
+function useMount(fn) {
+	let ref=useRef();
+
+	if (!ref.current) {
+		ref.current=true;
+		fn();
+	}
+}
+
+function useUnmount(fn) {
+	let vnode=useVnode();
+	hookIndex=useHookIndex();
+
+	vnode.unmounts[hookIndex]=fn;
+
+}
+
+export function useRefresh() {
+	let reactiveTui=useRenderInstance();
+	return (()=>reactiveTui.emit("refresh"));
+}
+
 export function useState(initial) {
 	let reactiveTui=useRenderInstance();
 	let ref=useRef(initial);
@@ -19,24 +49,36 @@ export function useId() {
 }
 
 export function useRef(def) {
-	let reactiveTui=useRenderInstance();
-	let id=useId();
-	let hookIndex=reactiveTui.hookIndex;
-	reactiveTui.hookIndex++;
+	let vnode=useVnode();
+	hookIndex=useHookIndex();
 
-	if (!reactiveTui.refs[id])
-		reactiveTui.refs[id]=[];
-
-	if (!reactiveTui.refs[id][hookIndex]) {
+	if (!vnode.refs[hookIndex]) {
 		let o={};
 		if (def!==undefined)
 			o.current=def;
 
-		reactiveTui.refs[id][hookIndex]=o;
+		vnode.refs[hookIndex]=o;
 	}
 
-	return reactiveTui.refs[id][hookIndex];
+	return vnode.refs[hookIndex];
 }
+
+function useVnode() {
+	let reactiveTui=useRenderInstance();
+	let id=useId();
+
+	if (!reactiveTui.vnodes[id])
+		reactiveTui.vnodes[id]={refs: [], unmounts: []};
+
+	return reactiveTui.vnodes[id];
+}
+
+function useHookIndex() {
+	let reactiveTui=useRenderInstance();
+	let hookIndex=reactiveTui.hookIndex;
+	reactiveTui.hookIndex++;
+	return hookIndex;
+} 
 
 function useRenderInstance() {
 	return ReactiveTui.renderInstance;
@@ -77,7 +119,7 @@ export class ReactiveTui extends EventEmitter {
 	constructor(topComponent) {
 		super();
 		this.topComponent=topComponent;
-		this.refs={};
+		this.vnodes={};
 		this.contexts=new Map();
 	}
 
@@ -110,9 +152,14 @@ export class ReactiveTui extends EventEmitter {
 		let content=this.renderNode(this.topComponent,"");
 		ReactiveTui.renderInstance=null;
 
-		for (let k of Object.keys(this.refs))
-			if (!this.activePaths.includes(k))
-				delete this.refs[k];
+		for (let k of Object.keys(this.vnodes))
+			if (!this.activePaths.includes(k)) {
+				for (let unmount of this.vnodes[k].unmounts)
+					if (unmount)
+						unmount();
+
+				delete this.vnodes[k];
+			}
 
 		if (!Array.isArray(content))
 			content=[content];
