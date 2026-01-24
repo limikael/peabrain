@@ -2,14 +2,36 @@ import {renderController, Menu, MenuItem, useBack, useEncoderButton, useRef, use
 		useState} from "peabrain";
 import {ObjectEditor} from "./components.jsx";
 
+async function awaitRemoteDeviceValue(nodeId, index, subIndex, value) {
+	let master=getMasterDevice();
+	let device=master.getRemoteDevice(nodeId);
+	let entry=device.at(index,subIndex);
+
+	await new Promise(resolve=>{
+		function check() {
+			if (entry.get()==value) {
+				entry.off("change",check);
+				resolve();
+			}
+		}
+
+		entry.on("change",check);
+		check();
+	});
+}
+
 async function runCalibration({log}) {
 	await log("_ Calibration _______");
-	await log("Finding neg. stop...");
 
-	for (let i=1; i<=10; i++) {
-		await new Promise(r=>setTimeout(r,1000));
-		await log("Step "+i);
-	}
+	await log("Finding neg. stop...");
+	await awaitRemoteDeviceValue(4,0x6400,1,0);
+	await log("Found at: 123");
+
+	await log("Finding pos. stop...");
+	await awaitRemoteDeviceValue(4,0x6400,3,0);
+	await log("Found at: 456");
+
+	await log("Complete...");
 }
 
 function Job({action}) {

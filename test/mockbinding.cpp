@@ -28,7 +28,7 @@ static JSValue pea_helloint(JSContext *ctx, JSValueConst thisobj, int argc, JSVa
     int32_t ret;
     ret=helloint();
     JSValue retval=JS_UNDEFINED;
-    retval=JS_NewUint32(ctx,ret);
+    retval=JS_NewInt32(ctx,ret);
     return retval;
 }
 static JSValue pea_hellovoid(JSContext *ctx, JSValueConst thisobj, int argc, JSValueConst *argv) {
@@ -43,7 +43,7 @@ static JSValue pea_helloinc(JSContext *ctx, JSValueConst thisobj, int argc, JSVa
     int32_t ret;
     ret=helloinc(arg_0);
     JSValue retval=JS_UNDEFINED;
-    retval=JS_NewUint32(ctx,ret);
+    retval=JS_NewInt32(ctx,ret);
     return retval;
 }
 static JSValue pea_concat(JSContext *ctx, JSValueConst thisobj, int argc, JSValueConst *argv) {
@@ -87,7 +87,7 @@ static JSValue pea_TestClass_getVal(JSContext *ctx, JSValueConst thisobj, int ar
     int32_t ret;
     ret=instance->getVal();
     JSValue retval=JS_UNDEFINED;
-    retval=JS_NewUint32(ctx,ret);
+    retval=JS_NewInt32(ctx,ret);
     return retval;
 }
 static JSValue pea_TestClass_setVal(JSContext *ctx, JSValueConst thisobj, int argc, JSValueConst *argv) {
@@ -197,7 +197,7 @@ static JSValue pea_getTestClassValue(JSContext *ctx, JSValueConst thisobj, int a
     int32_t ret;
     ret=getTestClassValue(arg_0);
     JSValue retval=JS_UNDEFINED;
-    retval=JS_NewUint32(ctx,ret);
+    retval=JS_NewInt32(ctx,ret);
     return retval;
 }
 static JSValue pea_getTestClassValueRef(JSContext *ctx, JSValueConst thisobj, int argc, JSValueConst *argv) {
@@ -207,7 +207,7 @@ static JSValue pea_getTestClassValueRef(JSContext *ctx, JSValueConst thisobj, in
     int32_t ret;
     ret=getTestClassValueRef(arg_0);
     JSValue retval=JS_UNDEFINED;
-    retval=JS_NewUint32(ctx,ret);
+    retval=JS_NewInt32(ctx,ret);
     return retval;
 }
 static JSValue pea_AnotherTest_ctor(JSContext *ctx, JSValueConst new_target, int argc, JSValueConst *argv) {

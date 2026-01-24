@@ -143,7 +143,7 @@ class Declaration {
     genPack(jsValueVar) {
         switch (this.type) {
             case "int":
-                return `${jsValueVar}=JS_NewUint32(ctx,${this.name});\n`;
+                return `${jsValueVar}=JS_NewInt32(ctx,${this.name});\n`;
                 break;
 
             case "string":

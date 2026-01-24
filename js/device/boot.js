@@ -43,7 +43,8 @@ global.getMasterDevice=()=>{
 RemoteDevice.prototype.flush=function() {
 	//console.log("flushing, id="+this.getNodeId()+" gen="+this.getGeneration()+" cgen="+this.getCommitGeneration());
 	let generation=this.getGeneration();
-	if (this.getCommitGeneration()==generation)
+	if (this.getCommitGeneration()==generation &&
+			!this.isRefreshInProgress())
 		return;
 
 	return new Promise(resolve=>{

@@ -1,4 +1,4 @@
 export * from "../ui/device-ui.js";
 export * from "../ui/reactive-tui.js";
-export * from "../ui/components.jsx";
+//export * from "../ui/components.jsx";
 export {default as EventEmitter} from "../utils/EventEmitter.js";

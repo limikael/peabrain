@@ -61,15 +61,17 @@ export function Menu({title, children}) {
 	function handleSelect(index) {
 		if (back) {
 			if (!index)
-				back();
+				return back();
 
 			else
-				setSelectedIndex(index-1);
+				index--;
 		}
 
-		else {
+		if (children[index].props.onClick)
+			children[index].props.onClick();
+
+		else
 			setSelectedIndex(index);
-		}
 	}
 
 	let items=[];
