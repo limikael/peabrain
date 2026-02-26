@@ -17,6 +17,7 @@ public:
     virtual void setJsEngine(JsEngine& jsEngine) = 0;
     virtual void init() {};
     virtual void close() {};
+    virtual void begin() {};
     virtual ~JsPlugin() {}
 };
 
@@ -74,6 +75,7 @@ public:
 private:
 	JSValue digitalWrite(int argc, JSValueConst *argv);
 	JSValue digitalRead(int argc, JSValueConst *argv);
+	JSValue pinMode(int argc, JSValueConst *argv);
 	JSValue setTimeout(int argc, JSValueConst *argv);
 	JSValue setInterval(int argc, JSValueConst *argv);
 	JSValue clearTimer(int argc, JSValueConst *argv);

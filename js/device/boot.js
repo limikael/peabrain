@@ -33,33 +33,35 @@ global.waitFor=async (p)=>{
 	//global.gc();
 }
 
-global.getMasterDevice=()=>{
-	if (!global.__instance_MasterDevice)
-		global.__instance_MasterDevice=new MasterDevice(canBus);
+if (global.RemoteDevice) {
+	global.getMasterDevice=()=>{
+		if (!global.__instance_MasterDevice)
+			global.__instance_MasterDevice=new MasterDevice(canBus);
 
-	return global.__instance_MasterDevice;
-}
+		return global.__instance_MasterDevice;
+	}
 
-RemoteDevice.prototype.flush=function() {
-	//console.log("flushing, id="+this.getNodeId()+" gen="+this.getGeneration()+" cgen="+this.getCommitGeneration());
-	let generation=this.getGeneration();
-	if (this.getCommitGeneration()==generation &&
-			!this.isRefreshInProgress())
-		return;
+	RemoteDevice.prototype.flush=function() {
+		//console.log("flushing, id="+this.getNodeId()+" gen="+this.getGeneration()+" cgen="+this.getCommitGeneration());
+		let generation=this.getGeneration();
+		if (this.getCommitGeneration()==generation &&
+				!this.isRefreshInProgress())
+			return;
 
-	return new Promise(resolve=>{
-		//console.log("******* will flush...");
-		let check=()=>{
-			//console.log("check... refreshing: "+this.isRefreshInProgress());
+		return new Promise(resolve=>{
+			//console.log("******* will flush...");
+			let check=()=>{
+				//console.log("check... refreshing: "+this.isRefreshInProgress());
 
-			if (this.getCommitGeneration()>=generation &&
-					!this.isRefreshInProgress()) {
-				this.off("commitGenerationChange",check);
-				resolve();
+				if (this.getCommitGeneration()>=generation &&
+						!this.isRefreshInProgress()) {
+					this.off("commitGenerationChange",check);
+					resolve();
+				}
+				//console.log("checking...");
 			}
-			//console.log("checking...");
-		}
 
-		this.on("commitGenerationChange",check);
-	});
-};
+			this.on("commitGenerationChange",check);
+		});
+	};
+}

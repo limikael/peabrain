@@ -1,0 +1,60 @@
+Here is a context Summary for the Peabrain Project. I would like to discus it. Please first absorb the information for context. I trust that you understand it, so just acknowledge with one single sentence that you understand, and I will
+continue the conversation from there. The "one sentence" rule is only for the initial acknowledgement of understanding,
+after this, the conversation can continue in your normal warm and friendly tone.
+
+Project: Peabrain – An open, bus-centric machine control system designed to bring modern software development practices (iteration, testing, collaboration) to physical automation.
+
+Core Problem: Traditional PLC systems are expensive, logistically difficult (especially in emerging economies), inflexible for experimentation, and rely on specialized programming languages (IEC 61131-3) that create a high skills barrier for multidisciplinary teams.
+
+Peabrain's Solution: A practical architecture combining inexpensive, decentralized CAN bus hardware with a full-stack JavaScript/TypeScript development ecosystem, making machine control accessible to developers familiar with modern web/cloud tools.
+Technical Architecture (Current Implementation)
+
+    Hardware Foundation:
+
+        Bus-Centric Design: Systems are built from small, dedicated nodes (Logic & Interface Unit, GPIO node, motor controller) connected via a CAN bus, allowing for modular, scalable growth.
+
+        Accessible Components: Uses commodity microcontrollers (ESP32-C3) and open-source hardware designs to keep costs low and enable local assembly.
+
+    Software Stack:
+
+        Low-Level: A custom, simplified CANopen stack ("canopener") written in C++ for the device nodes, exposing a clean C++ API for hardware interaction.
+
+        Binding Layer: A novel tool ("peabind") that uses a declarative JSON configuration to auto-generate C++/JavaScript bindings for QuickJS, seamlessly exposing hardware objects to the high-level runtime.
+
+        High-Level Runtime: A JavaScript/TypeScript environment on the main Logic & Interface Unit (LIU), featuring:
+
+            A React-like framework with hooks (e.g., useEncoder, useOpenCanEntry) for building declarative, component-based machine interfaces.
+
+            Hardware Abstraction via Profiles: Device-specific JavaScript classes (e.g., MotorDevice, GpioDevice) created from profile definitions, providing semantic APIs (.targetPosition) instead of raw CANopen object dictionaries.
+
+            Modern Developer Experience: A peabrain deploy command (inspired by Cloudflare's wrangler) that abstracts deployment to a device over USB or the cloud, enabling familiar npm-based project workflows, testing, and CI/CD integration.
+
+    Current State: A fully working system controlling a physical machine. The application logic is written as modular, async JavaScript, demonstrating features like interactive menus, calibration routines (findLimit), and simulation/testing components (SimulatedMotor).
+
+Philosophical & Strategic Goals
+
+    Accessibility: Enable small teams (entrepreneur, fabricator, web developer) to build automation without needing a certified PLC programmer.
+
+    Iteration & Agility: Support a software-like development cycle for machines: rapid prototyping, test-driven development, version control, and incremental refactoring.
+
+    Stewardship & Openness: All designs (software, hardware, enclosures) are open-source. The goal is to foster local capability, repair, and adaptation, reducing long-term dependency on external vendors.
+
+    Long-Term Evolution: The system is designed as a platform to study how modern software practices affect machine reliability and team collaboration (the "socio-technical" research angle). It is not initially positioned as a certified safety-critical system.
+
+Key Differentiators
+
+    Not just "JavaScript on a microcontroller." It's a complete, coherent toolchain from the metal (CAN bus, custom stack) to the developer (React-like UI, npm deployment).
+
+    Architecture mirrors modern web development: Components, hooks, profiles, and a seamless deploy command create a familiar mental model for millions of developers.
+
+    Designed for change: The bus-centric hardware and software abstractions make reconfiguration and scaling a matter of adding nodes and updating logic, not redesigning a central controller.
+
+Open Questions & Future Direction
+
+    Runtime Safety & Error Handling: The failure mode philosophy (JavaScript error handling, watchdogs, safe states) is an acknowledged area for future design work.
+
+    Real-Time Guarantees: While PDOs enable fast hardware-to-hardware communication, the integration of hard real-time constraints with the high-level JavaScript event loop is a topic for further exploration.
+
+    Community & Ecosystem: Success is defined by independent teams building and deploying machines in different regions, fostering an ecosystem of hardware profiles, software modules, and shared practices.
+
+In essence, Peabrain is a practical experiment in applying the last 20 years of software engineering evolution to the world of physical machine control, with a focus on accessibility, collaboration, and long-term adaptability.

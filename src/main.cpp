@@ -1,6 +1,7 @@
 #include "JsEngine.h"
 #include "CanPlugin.h"
 #include "UiPlugin.h"
+#include "NetPlugin.h"
 #include <Arduino.h>
 #include "FS.h"
 #include "SPIFFS.h"
@@ -8,6 +9,7 @@
 JsEngine js(Serial);
 CanPlugin can(5,4);
 UiPlugin ui;
+NetPlugin net;
 
 void myTask(void *arg) {
     for (;;) {
@@ -17,21 +19,18 @@ void myTask(void *arg) {
 }
 
 void setup() {
-    ui.begin();
+    // shouldn't be needed: //ui.begin();
 
-    js.addPlugin(&can);
-    js.addPlugin(&ui);
+    //js.addPlugin(&can);
+    //js.addPlugin(&ui);
+    js.addPlugin(&net);
 
-	/*pinMode(8,OUTPUT);
-	digitalWrite(8,0);*/
-
-    //Serial.setRxBufferSize(1024);  // must be BEFORE begin()
     Serial.begin(112500);
     if (!SPIFFS.begin(true)) { // true = format if mount fails
         Serial.println("SPIFFS Mount Failed");
     }
 
-    //js.begin();
+    //pinMode(8,OUTPUT);
 
 	xTaskCreatePinnedToCore(
         myTask,
@@ -45,5 +44,4 @@ void setup() {
 }
 
 void loop() {
-	//js.loop();
 }

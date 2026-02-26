@@ -1,0 +1,48 @@
+what is "headers" for the httpClientStart call? arrays are messy to send...
+
+
+// wifi
+x wifiConnect(ssid, password)
+x wifiDisconnect()
+x wifiGetStatus()
+x wifiGetIp()
+x wifiSetStatusFunc(fn)
+
+// wifi scan
+wifiScanStart()              // kicks off a scan
+wifiScanSetResultFunc(fn)    // called for each network found
+wifiScanSetEndFunc(fn)       // called when scan finishes
+wifiScanAbort()              // optional
+
+// web socket
+wsConnect(url)
+wsClose()
+wsSend(data)
+wsGetStatus()
+wsSetMessageFunc(fn)
+wsSetStatusFunc(fn)
+
+// HTTP client (single outbound request)
+httpClientRequestStart(method, url)
+httpClientRequestWriteHeader(value)
+httpClientRequestWriteData(data)
+httpClientRequestEnd()
+httpClientGetState()
+httpClientGetStatusCode()
+httpClientClose()
+httpClientSetResponseHeaderFunc(fn)
+httpClientSetResponseDataFunc(fn)
+httpClientSetResponseEndFunc(fn)
+
+// HTTP server (single inbound request)
+httpServerSetRequestStartFunc(fn)
+httpServerSetRequestHeaderFunc(fn)
+httpServerSetRequestDataFunc(fn)
+httpServerSetRequestEndFunc(fn)
+httpServerGetMethod()
+httpServerGetUrl()
+httpServerResponseStart(statusCode)
+httpServerResponseWriteHeader(data)
+httpServerResponseWriteData(data)
+httpServerResponseEnd()
+httpServerListen(port)

@@ -1,9 +1,8 @@
 console.log("hello, blink starting...");
-
-// todo.. fix default pin mode...
+pinMode(8,"output");
 
 function tick() {
-	console.log("blink...");
+	//console.log("blink...");
 	digitalWrite(8,!digitalRead(8));
 	setTimeout(tick,1000);
 }

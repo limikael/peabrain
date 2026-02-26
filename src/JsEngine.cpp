@@ -27,6 +27,8 @@ JsEngine::JsEngine(Stream& stream)
 void JsEngine::addPlugin(JsPlugin *plugin) {
     plugin->setJsEngine(*this);
     plugins.push_back(plugin);
+
+    plugin->begin();
 }
 
 void JsEngine::begin() {
@@ -135,6 +137,7 @@ void JsEngine::reset() {
 
     addGlobal("digitalWrite",newMethod(this,&JsEngine::digitalWrite,2));
     addGlobal("digitalRead",newMethod(this,&JsEngine::digitalRead,1));
+    addGlobal("pinMode",newMethod(this,&JsEngine::pinMode,2));
     addGlobal("serialWrite",newMethod(this,&JsEngine::serialWrite,1));
     addGlobal("setTimeout",newMethod(this,&JsEngine::setTimeout,2));
     addGlobal("setInterval",newMethod(this,&JsEngine::setInterval,2));
@@ -376,6 +379,22 @@ JSValue JsEngine::digitalRead(int argc, JSValueConst *argv) {
     val=::digitalRead(pin);
 
     return JS_NewUint32(ctx,val);
+}
+
+JSValue JsEngine::pinMode(int argc, JSValueConst *argv) {
+    int32_t pin=0;
+    JS_ToInt32(ctx,&pin,argv[0]);
+    const char *mode=JS_ToCString(ctx, argv[1]);
+
+    if (!strcmp(mode,"output"))
+        ::pinMode(pin,OUTPUT);
+
+    else
+        ::pinMode(pin,INPUT);
+
+    JS_FreeCString(ctx,mode);
+
+    return JS_UNDEFINED;
 }
 
 JSValue JsEngine::digitalWrite(int argc, JSValueConst *argv) {

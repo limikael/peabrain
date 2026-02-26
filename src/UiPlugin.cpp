@@ -17,7 +17,7 @@ void UiPlugin::begin() {
     lcd.backlight();
     lcd.clear();
     lcd.setCursor(0,0);
-    //lcd.print("Starting...");
+    lcd.print("Starting...");
 
     encoder.begin();
     //button.begin();

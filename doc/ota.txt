@@ -1,0 +1,60 @@
+#include "esp_ota_ops.h"
+#include "esp_system.h"
+#include "esp_log.h"
+#include <string.h>
+
+bool replaceFirmware(const char* path) {
+    const esp_partition_t* update_partition = esp_ota_get_next_update_partition(NULL);
+    if (!update_partition) {
+        ESP_LOGE("OTA", "No OTA partition found");
+        return false;
+    }
+
+    // Open the firmware file from SPIFFS/LittleFS/FAT
+    FILE* f = fopen(path, "rb");
+    if (!f) {
+        ESP_LOGE("OTA", "Cannot open firmware file");
+        return false;
+    }
+
+    esp_ota_handle_t ota_handle;
+    esp_err_t err = esp_ota_begin(update_partition, OTA_SIZE_UNKNOWN, &ota_handle);
+    if (err != ESP_OK) {
+        fclose(f);
+        ESP_LOGE("OTA", "esp_ota_begin failed");
+        return false;
+    }
+
+    // Stream the firmware file into the OTA partition
+    uint8_t buffer[1024];
+    size_t read_bytes;
+    while ((read_bytes = fread(buffer, 1, sizeof(buffer), f)) > 0) {
+        err = esp_ota_write(ota_handle, buffer, read_bytes);
+        if (err != ESP_OK) {
+            fclose(f);
+            esp_ota_end(ota_handle);
+            ESP_LOGE("OTA", "esp_ota_write failed");
+            return false;
+        }
+    }
+
+    fclose(f);
+
+    // Finish OTA
+    err = esp_ota_end(ota_handle);
+    if (err != ESP_OK) {
+        ESP_LOGE("OTA", "esp_ota_end failed");
+        return false;
+    }
+
+    // Set this partition as bootable
+    err = esp_ota_set_boot_partition(update_partition);
+    if (err != ESP_OK) {
+        ESP_LOGE("OTA", "esp_ota_set_boot_partition failed");
+        return false;
+    }
+
+    ESP_LOGI("OTA", "Firmware successfully written, rebooting...");
+    esp_restart();
+    return true; // never reached
+}
