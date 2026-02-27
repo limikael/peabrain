@@ -86,6 +86,7 @@ private:
 	JSValue fileClose(int argc, JSValueConst *argv);
 	JSValue fileRead(int argc, JSValueConst *argv);
 	JSValue fileWrite(int argc, JSValueConst *argv);
+	JSValue fileExists(int argc, JSValueConst *argv);
 	JSValue scheduleReload(int argc, JSValueConst *argv);
 	JSValue garbageCollect(int argc, JSValueConst *argv);
 	JSValue setBootInProgress(int argc, JSValueConst *argv);

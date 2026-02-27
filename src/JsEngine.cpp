@@ -148,6 +148,7 @@ void JsEngine::reset() {
     addGlobal("fileClose",newMethod(this,&JsEngine::fileClose,1));
     addGlobal("fileRead",newMethod(this,&JsEngine::fileRead,1));
     addGlobal("fileWrite",newMethod(this,&JsEngine::fileWrite,1));
+    addGlobal("fileExists",newMethod(this,&JsEngine::fileExists,1));
     addGlobal("scheduleReload",newMethod(this,&JsEngine::scheduleReload,1));
     addGlobal("setBootInProgress",newMethod(this,&JsEngine::setBootInProgress,1));
     addGlobal("gc",newMethod(this,&JsEngine::garbageCollect,0));
@@ -454,6 +455,10 @@ JSValue JsEngine::clearTimer(int argc, JSValueConst *argv) {
     return JS_UNDEFINED;
 }
 
+JSValue JsEngine::fileExists(int argc, JSValueConst *argv) {
+    JsCString path(ctx,argv[0]);
+    return JS_NewBool(ctx,SPIFFS.exists(path.c_str()));
+}
 
 JSValue JsEngine::fileOpen(int argc, JSValueConst *argv) {
     JsCString path(ctx, argv[0]);

@@ -46,3 +46,11 @@ httpServerResponseWriteHeader(data)
 httpServerResponseWriteData(data)
 httpServerResponseEnd()
 httpServerListen(port)
+
+// simpler server
+httpServerSetRequestFunc(fn)
+httpServerGetMethod()
+httpServerGetUrl()
+httpServerWriteHeader(data)
+httpServerWriteData(data)
+httpServerListen(port)

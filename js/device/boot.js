@@ -1,9 +1,9 @@
 import Repl from "./Repl.js";
 import EventEmitter from "../utils/EventEmitter.js";
 
-global._refRegistry = new Set();
+/*global._refRegistry = new Set();
 global.ref=obj=>{ global._refRegistry.add(obj); };
-global.unref=obj=>{ global._refRegistry.delete(obj); };
+global.unref=obj=>{ global._refRegistry.delete(obj); };*/
 
 global.EventEmitter=EventEmitter;
 
@@ -15,6 +15,30 @@ global.console={};
 console.log=(...args)=>serialWrite(args.map(s=>String(s)).join(" ")+"\r\n");
 
 repl=new Repl(serial,global);
+
+global.getInfo=()=>{
+	return ({
+		wifiStatus: wifiGetStatus()
+	});
+}
+
+global.loadSettings=()=>{
+	global.settings={};
+
+	if (fileExists("/settings.json")) {
+		let fid=fileOpen("/settings.json");
+		let s="";
+
+		do {
+			let chunk=fileRead(fid,64);
+			s+=chunk;
+		} while (chunk.length)
+
+		fileClose(fid);
+	}
+
+	console.log(JSON.stringify(global.settings));
+}
 
 global.waitFor=async (p)=>{
 	if (typeof p=="function")

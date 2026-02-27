@@ -15,6 +15,12 @@ export default class PreabrainCli {
         return this.device;
     }
 
+    async info(options) {
+        this.init(options);
+        let info=await this.device.getInfo();
+        console.log(JSON.stringify(info,null,2));
+    }
+
     async close() {
         if (this.device) {
             await this.device.close();
@@ -75,29 +81,19 @@ export default class PreabrainCli {
 
         console.log(`Size: ${source.length} bytes`);
         await this.stop(options);
-
-        //let device=this.getDevice(options);
-        let contents=stringChunkify(source,64);
-        let fid=await this.device.fileOpen("/boot.js", "w");
-        for (let content of contents)
-            await this.device.fileWrite(fid,content);
-
-        await this.device.fileClose(fid);
-
+        await this.writeFile("/boot.js",source);
         await this.start(options);
 
         if (options.follow)
             await new Promise(r=>{});
+    }
 
-        /*await device.scheduleReload();
+    async writeFile(fn, content) {
+        let chunks=stringChunkify(content,64);
+        let fid=await this.device.fileOpen(fn, "w");
+        for (let chunk of chunks)
+            await this.device.fileWrite(fid,chunk);
 
-        await new Promise(resolve=>{
-            device.on("message",message=>{
-                if (message.type=="started")
-                    resolve();
-            });
-        });
-
-        await device.close();*/
+        await this.device.fileClose(fid);
     }
 }
