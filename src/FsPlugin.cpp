@@ -1,0 +1,98 @@
+#include "FsPlugin.h"
+#include <stdlib.h>
+#include <WiFi.h>
+
+FsPlugin::FsPlugin() {
+}
+
+void FsPlugin::setJsEngine(JsEngine& jsEngine_) {
+	jsEngine=&jsEngine_;
+}
+
+void FsPlugin::init() {
+    jsEngine->addGlobal("fileOpen",jsEngine->newMethod(this,&FsPlugin::fileOpen,2));
+    jsEngine->addGlobal("fileClose",jsEngine->newMethod(this,&FsPlugin::fileClose,1));
+    jsEngine->addGlobal("fileRead",jsEngine->newMethod(this,&FsPlugin::fileRead,1));
+    jsEngine->addGlobal("fileWrite",jsEngine->newMethod(this,&FsPlugin::fileWrite,1));
+    jsEngine->addGlobal("fileExists",jsEngine->newMethod(this,&FsPlugin::fileExists,1));
+}
+
+void FsPlugin::loop() {
+}
+
+void FsPlugin::close() {
+    for (JsFile& f: files)
+        f.file.close();
+
+    files.clear();
+}
+
+JSValue FsPlugin::fileOpen(int argc, JSValueConst *argv) {
+    JsCString path(jsEngine->getContext(),argv[0]);
+    JsCString mode(jsEngine->getContext(),argv[1]);
+
+    File f=SPIFFS.open(path.c_str(), mode.c_str());
+    if (!f)
+        return JS_ThrowInternalError(jsEngine->getContext(),"failed to open file");
+
+    JsFile jsf;
+    jsf.id=jsEngine->getNewResourceId();
+    jsf.file=f;
+    files.push_back(jsf);
+
+    return JS_NewUint32(jsEngine->getContext(),jsf.id);
+}
+
+JSValue FsPlugin::fileRead(int argc, JSValueConst *argv) {
+    uint32_t fid;
+    JS_ToUint32(jsEngine->getContext(),&fid,argv[0]);
+
+    auto it=std::find_if(files.begin(), files.end(),
+        [&](const JsFile& f) { return f.id == fid; });
+
+    if (it==files.end())
+        return JS_ThrowInternalError(jsEngine->getContext(),"invalid file id");
+
+    const size_t N=128;
+    char buffer[N];
+    size_t bytesRead=it->file.readBytes(buffer, N);
+
+    return JS_NewStringLen(jsEngine->getContext(),buffer,bytesRead);
+}
+
+JSValue FsPlugin::fileWrite(int argc, JSValueConst *argv) {
+    uint32_t fid;
+    JS_ToUint32(jsEngine->getContext(),&fid,argv[0]);
+    JsCString data(jsEngine->getContext(),argv[1]);
+
+    auto it=std::find_if(files.begin(), files.end(),
+        [&](const JsFile& f) { return f.id == fid; });
+
+    if (it==files.end())
+        return JS_ThrowInternalError(jsEngine->getContext(),"invalid file id");
+
+    //it->file.print("helloooo");
+    //it->file.write((uint8_t *)data.c_str(),strlen(data.c_str()));
+    it->file.print(data.c_str());
+    return JS_UNDEFINED;
+}
+
+JSValue FsPlugin::fileClose(int argc, JSValueConst *argv) {
+    uint32_t fid;
+    JS_ToUint32(jsEngine->getContext(),&fid,argv[0]);
+
+    auto it=std::find_if(files.begin(), files.end(),
+        [&](const JsFile& f) { return f.id == fid; });
+
+    if (it==files.end())
+        return JS_ThrowInternalError(jsEngine->getContext(),"invalid file id");
+
+    it->file.close();
+    files.erase(it);
+    return JS_UNDEFINED;
+}
+
+JSValue FsPlugin::fileExists(int argc, JSValueConst *argv) {
+    JsCString path(jsEngine->getContext(),argv[0]);
+    return JS_NewBool(jsEngine->getContext(),SPIFFS.exists(path.c_str()));
+}

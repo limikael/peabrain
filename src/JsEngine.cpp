@@ -144,11 +144,6 @@ void JsEngine::reset() {
     addGlobal("clearTimeout",newMethod(this,&JsEngine::clearTimer,1));
     addGlobal("clearInterval",newMethod(this,&JsEngine::clearTimer,1));
     addGlobal("setSerialDataFunc",newMethod(this,&JsEngine::setSerialDataFunc,1));
-    addGlobal("fileOpen",newMethod(this,&JsEngine::fileOpen,2));
-    addGlobal("fileClose",newMethod(this,&JsEngine::fileClose,1));
-    addGlobal("fileRead",newMethod(this,&JsEngine::fileRead,1));
-    addGlobal("fileWrite",newMethod(this,&JsEngine::fileWrite,1));
-    addGlobal("fileExists",newMethod(this,&JsEngine::fileExists,1));
     addGlobal("scheduleReload",newMethod(this,&JsEngine::scheduleReload,1));
     addGlobal("setBootInProgress",newMethod(this,&JsEngine::setBootInProgress,1));
     addGlobal("gc",newMethod(this,&JsEngine::garbageCollect,0));
@@ -202,6 +197,11 @@ void JsEngine::reset() {
 
     if (!bootInProgress)
         stream.printf("{\"type\": \"started\"}\n",startCount);
+}
+
+int JsEngine::getNewResourceId() {
+    resourceCount++;
+    return resourceCount;
 }
 
 void JsEngine::printJsValue(JSValue val) {
@@ -452,77 +452,6 @@ JSValue JsEngine::clearTimer(int argc, JSValueConst *argv) {
 
     JS_FreeValue(ctx,it->func);
     timers.erase(it);
-    return JS_UNDEFINED;
-}
-
-JSValue JsEngine::fileExists(int argc, JSValueConst *argv) {
-    JsCString path(ctx,argv[0]);
-    return JS_NewBool(ctx,SPIFFS.exists(path.c_str()));
-}
-
-JSValue JsEngine::fileOpen(int argc, JSValueConst *argv) {
-    JsCString path(ctx, argv[0]);
-    JsCString mode(ctx, argv[1]);
-
-    File f=SPIFFS.open(path.c_str(), mode.c_str());
-    if (!f)
-        return JS_ThrowInternalError(ctx, "failed to open file");
-
-    resourceCount++;
-    JsFile jsf;
-    jsf.id=resourceCount;
-    jsf.file=f;
-    files.push_back(jsf);
-
-    return JS_NewUint32(ctx,jsf.id);
-}
-
-JSValue JsEngine::fileRead(int argc, JSValueConst *argv) {
-    uint32_t fid;
-    JS_ToUint32(ctx,&fid,argv[0]);
-
-    auto it=std::find_if(files.begin(), files.end(),
-        [&](const JsFile& f) { return f.id == fid; });
-
-    if (it==files.end())
-        return JS_ThrowInternalError(ctx, "invalid file id");
-
-    const size_t N=128;
-    char buffer[N];
-    size_t bytesRead=it->file.readBytes(buffer, N);
-
-    return JS_NewStringLen(ctx, buffer, bytesRead);
-}
-
-JSValue JsEngine::fileWrite(int argc, JSValueConst *argv) {
-    uint32_t fid;
-    JS_ToUint32(ctx,&fid,argv[0]);
-    JsCString data(ctx, argv[1]);
-
-    auto it=std::find_if(files.begin(), files.end(),
-        [&](const JsFile& f) { return f.id == fid; });
-
-    if (it==files.end())
-        return JS_ThrowInternalError(ctx, "invalid file id");
-
-    //it->file.print("helloooo");
-    //it->file.write((uint8_t *)data.c_str(),strlen(data.c_str()));
-    it->file.print(data.c_str());
-    return JS_UNDEFINED;
-}
-
-JSValue JsEngine::fileClose(int argc, JSValueConst *argv) {
-    uint32_t fid;
-    JS_ToUint32(ctx,&fid,argv[0]);
-
-    auto it=std::find_if(files.begin(), files.end(),
-        [&](const JsFile& f) { return f.id == fid; });
-
-    if (it==files.end())
-        return JS_ThrowInternalError(ctx, "invalid file id");
-
-    it->file.close();
-    files.erase(it);
     return JS_UNDEFINED;
 }
 

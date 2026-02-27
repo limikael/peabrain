@@ -43,12 +43,6 @@ public:
 	JSValue func;
 };
 
-class JsFile {
-public:
-	uint32_t id;
-	File file;
-};
-
 class JsEngine {
 public:
 	JsEngine(Stream &stream);
@@ -71,6 +65,7 @@ public:
 	Stream* getStream() { return &stream; }
 	JSValue getExceptionMessage();
 	void printJsValue(JSValue val);
+	int getNewResourceId();
 
 private:
 	JSValue digitalWrite(int argc, JSValueConst *argv);
@@ -82,11 +77,6 @@ private:
 	JSValue consoleLog(int argc, JSValueConst *argv);
 	JSValue serialWrite(int argc, JSValueConst *argv);
 	JSValue setSerialDataFunc(int argc, JSValueConst *argv);
-	JSValue fileOpen(int argc, JSValueConst *argv);
-	JSValue fileClose(int argc, JSValueConst *argv);
-	JSValue fileRead(int argc, JSValueConst *argv);
-	JSValue fileWrite(int argc, JSValueConst *argv);
-	JSValue fileExists(int argc, JSValueConst *argv);
 	JSValue scheduleReload(int argc, JSValueConst *argv);
 	JSValue garbageCollect(int argc, JSValueConst *argv);
 	JSValue setBootInProgress(int argc, JSValueConst *argv);
@@ -97,7 +87,6 @@ private:
 	JSContext *ctx=nullptr;
 	Stream& stream;
 	std::vector<JsEngineTimer> timers;
-	std::vector<JsFile> files;
 	std::vector<JsPlugin*> plugins;
 	JSValue serialDataFunc;
 	JSValue bootError;
