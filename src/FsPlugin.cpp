@@ -13,8 +13,10 @@ void FsPlugin::init() {
     jsEngine->addGlobal("fileOpen",jsEngine->newMethod(this,&FsPlugin::fileOpen,2));
     jsEngine->addGlobal("fileClose",jsEngine->newMethod(this,&FsPlugin::fileClose,1));
     jsEngine->addGlobal("fileRead",jsEngine->newMethod(this,&FsPlugin::fileRead,1));
+    jsEngine->addGlobal("fileReadDirEnt",jsEngine->newMethod(this,&FsPlugin::fileReadDirEnt,1));
     jsEngine->addGlobal("fileWrite",jsEngine->newMethod(this,&FsPlugin::fileWrite,1));
     jsEngine->addGlobal("fileExists",jsEngine->newMethod(this,&FsPlugin::fileExists,1));
+    jsEngine->addGlobal("fileUnlink",jsEngine->newMethod(this,&FsPlugin::fileUnlink,1));
 }
 
 void FsPlugin::loop() {
@@ -25,6 +27,23 @@ void FsPlugin::close() {
         f.file.close();
 
     files.clear();
+}
+
+JSValue FsPlugin::fileReadDirEnt(int argc, JSValueConst *argv) {
+    uint32_t fid;
+    JS_ToUint32(jsEngine->getContext(),&fid,argv[0]);
+
+    auto it=std::find_if(files.begin(), files.end(),
+        [&](const JsFile& f) { return f.id == fid; });
+
+    if (it==files.end())
+        return JS_ThrowInternalError(jsEngine->getContext(),"invalid file id");
+
+    File file=it->file.openNextFile();
+    if (!file)
+        return JS_UNDEFINED;
+
+    return JS_NewString(jsEngine->getContext(),file.name());
 }
 
 JSValue FsPlugin::fileOpen(int argc, JSValueConst *argv) {
@@ -95,4 +114,15 @@ JSValue FsPlugin::fileClose(int argc, JSValueConst *argv) {
 JSValue FsPlugin::fileExists(int argc, JSValueConst *argv) {
     JsCString path(jsEngine->getContext(),argv[0]);
     return JS_NewBool(jsEngine->getContext(),SPIFFS.exists(path.c_str()));
+}
+
+JSValue FsPlugin::fileUnlink(int argc, JSValueConst *argv) {
+    if (argc!=1)
+        return JS_ThrowInternalError(jsEngine->getContext(),"wrong arg count");
+
+    JsCString path(jsEngine->getContext(),argv[0]);
+    if (!SPIFFS.remove(path.c_str()))
+        return JS_ThrowInternalError(jsEngine->getContext(),"unable to remove file");
+
+    return JS_UNDEFINED;
 }

@@ -18,26 +18,47 @@ repl=new Repl(serial,global);
 
 global.getInfo=()=>{
 	return ({
-		wifiStatus: wifiGetStatus()
+		wifiStatus: wifiGetStatus(),
+		ip: wifiGetIp()
 	});
+}
+
+global.readdir=(p)=>{
+	let f=fileOpen(p,"r");
+	let a=[];
+
+	let s=fileReadDirEnt(f);
+	while (s) {
+		a.push(s);
+		s=fileReadDirEnt(f);
+	}
+
+	fileClose(f);
+
+	return a;
 }
 
 global.loadSettings=()=>{
 	global.settings={};
 
 	if (fileExists("/settings.json")) {
-		let fid=fileOpen("/settings.json");
-		let s="";
+		let fid=fileOpen("/settings.json","r");
+		let s="",chunk;
 
 		do {
-			let chunk=fileRead(fid,64);
+			chunk=fileRead(fid,64);
 			s+=chunk;
 		} while (chunk.length)
 
 		fileClose(fid);
+		global.settings=JSON.parse(s);
 	}
 
-	console.log(JSON.stringify(global.settings));
+	if (global.settings.wifiSsid)
+		wifiConnect(global.settings.wifiSsid,global.settings.wifiPassword);
+
+	else
+		wifiDisconnect();
 }
 
 global.waitFor=async (p)=>{
@@ -89,3 +110,5 @@ if (global.RemoteDevice) {
 		});
 	};
 }
+
+loadSettings();

@@ -24,5 +24,8 @@ private:
     JSValue fileRead(int argc, JSValueConst *argv);
     JSValue fileWrite(int argc, JSValueConst *argv);
     JSValue fileExists(int argc, JSValueConst *argv);
+    JSValue fileReadDirEnt(int argc, JSValueConst *argv);
+    JSValue fileUnlink(int argc, JSValueConst *argv);
+
     std::vector<JsFile> files;
 };

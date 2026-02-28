@@ -15,6 +15,35 @@ export default class PreabrainCli {
         return this.device;
     }
 
+    async set(options) {
+        this.init(options);
+        let config={};
+        if (await this.device.fileExists("/settings.json")) {
+            config=JSON.parse(await this.readFile("/settings.json"));
+        }
+
+        config[options.name]=options.value;
+        await this.writeFile("/settings.json",JSON.stringify(config,null,2));
+        await this.device.loadSettings();
+    }
+
+    async cat(options) {
+        this.init(options);
+        let content=await this.readFile(options.file);
+        console.log(content);
+    }
+
+    async ls(options) {
+        this.init(options);
+        let dir=await this.device.readdir(options.dir);
+        console.log(JSON.stringify(dir,null,2));
+    }
+
+    async rm(options) {
+        this.init(options);
+        await this.device.fileUnlink(options.file);
+    }
+
     async info(options) {
         this.init(options);
         let info=await this.device.getInfo();
@@ -95,5 +124,20 @@ export default class PreabrainCli {
             await this.device.fileWrite(fid,chunk);
 
         await this.device.fileClose(fid);
+    }
+
+    async readFile(fn) {
+        let fid=await this.device.fileOpen(fn, "r");
+        let content="";
+        let s;
+
+        do {
+            s=await this.device.fileRead(fid,64);
+            content+=s;
+        } while (s.length);
+
+        await this.device.fileClose(fid);
+
+        return content;
     }
 }
