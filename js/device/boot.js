@@ -1,10 +1,6 @@
 import Repl from "./Repl.js";
 import EventEmitter from "../utils/EventEmitter.js";
 
-/*global._refRegistry = new Set();
-global.ref=obj=>{ global._refRegistry.add(obj); };
-global.unref=obj=>{ global._refRegistry.delete(obj); };*/
-
 global.EventEmitter=EventEmitter;
 
 global.serial=new EventEmitter();
