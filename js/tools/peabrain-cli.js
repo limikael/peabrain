@@ -1,10 +1,7 @@
 #!/usr/bin/env node
 import {Command, program} from "commander";
-import fs from "node:fs";
-import PeabrainCli from "./PeabrainCli.js";
-import Device from "./Device.js";
-
-let peabrainCli=new PeabrainCli();
+import {deviceCommand} from "./Device.js";
+import * as commands from "./peabrain-commands.js";
 
 program
     .name('peabrain')
@@ -14,70 +11,49 @@ program
 
 program
     .command('info')
-    .option('-p, --port <path>', 'serial port path')
-    .action(async (options) => {
-        options={...program.opts(),...options};
-        await peabrainCli.info(options);
-    });
-
-program
-    .command('deploy')
-    .argument('<file>', 'local JS file to deploy')
-    .option('-p, --port <path>', 'serial port path')
-    .option('-f, --follow', 'keep port open')
-    .action(async (file, options) => {
-        options={...program.opts(),...options};
-        await peabrainCli.deploy({file, ...options});
-    });
-
-program
-    .command('start')
-    .option('-p, --port <path>', 'serial port path')
-    .action(async (options) => {
-        options={...program.opts(),...options};
-        await peabrainCli.start(options);
-    });
-
-program
-    .command('stop')
-    .option('-p, --port <path>', 'serial port path')
-    .action(async (options) => {
-        options={...program.opts(),...options};
-        await peabrainCli.stop(options);
-    });
+    .description("Show runtime info.")
+    .action(deviceCommand(commands.peabrainInfo));
 
 program
     .command('ls')
+    .description("List files on device.")
     .argument('[dir]', 'dir to list', "/")
-    .option('-p, --port <path>', 'serial port path')
-    .action(async (dir,options) => {
-        await peabrainCli.ls({dir, ...program.opts(), ...options});
-    });
+    .action(deviceCommand(commands.peabrainLs));
 
 program
     .command('cat')
+    .description("Download and print file on device.")
     .argument('<file>', 'file to print')
-    .option('-p, --port <path>', 'serial port path')
-    .action(async (file,options) => {
-        await peabrainCli.cat({file, ...program.opts(), ...options});
-    });
+    .action(deviceCommand(commands.peabrainCat));
 
 program
     .command('rm')
+    .description("Remove file on device.")
     .argument('<file>', 'file to remove')
-    .option('-p, --port <path>', 'serial port path')
-    .action(async (file,options) => {
-        await peabrainCli.rm({file, ...program.opts(), ...options});
-    });
+    .action(deviceCommand(commands.peabrainRm));
 
 program
     .command('set')
+    .description("Set a config value.")
     .argument('<name>', 'setting variable to set')
     .argument('<value>', 'value to set')
-    .option('-p, --port <path>', 'serial port path')
-    .action(async (name,value,options) => {
-        await peabrainCli.set({name, value, ...program.opts(), ...options});
-    });
+    .action(deviceCommand(commands.peabrainSet));
+
+program
+    .command('start')
+    .description("Stop current program.")
+    .action(deviceCommand(commands.peabrainStart));
+
+program
+    .command('stop')
+    .description("Stop current program.")
+    .action(deviceCommand(commands.peabrainStop));
+
+program
+    .command('deploy')
+    .description("Build, deploy and start program from file.")
+    .argument('<file>', 'local JS file to deploy')
+    .option('-f, --follow', 'keep port open')
+    .action(deviceCommand(commands.peabrainDeploy));
 
 await program.parseAsync(process.argv);
-await peabrainCli.close();
