@@ -42,7 +42,9 @@ void NetPlugin::handleWebRequest(HTTPMethod requestMethod, String requestUri) {
         JS_FreeValue(jsEngine->getContext(),args[1]);
     }
 
-    webServer.send(200,"application/json","hello world");
+    else {
+        webServer.send(500,"text/plain","No request handler installed.\n");
+    }
 }
 
 JSValue NetPlugin::httpServerSend(int argc, JSValueConst *argv) {

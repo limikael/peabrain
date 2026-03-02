@@ -12,6 +12,23 @@ console.log=(...args)=>serialWrite(args.map(s=>String(s)).join(" ")+"\r\n");
 
 repl=new Repl(serial,global);
 
+httpServerSetRequestFunc(()=>{
+	try {
+		let message=JSON.parse(httpServerGetPostData());
+        let res=global[message.method](...message.params);
+		let response={id: message.id, result: res};
+		let responseBody=JSON.stringify(response,null,2)+"\n";
+		httpServerSend(200,"application/json",responseBody);
+	}
+
+	catch (e) {
+		let response={error: {message: e.message}};
+		let responseBody=JSON.stringify(response,null,2)+"\n";
+		httpServerSend(500,"application/json",responseBody);
+	}
+});
+
+
 global.getInfo=()=>{
 	return ({
 		wifiStatus: wifiGetStatus(),
