@@ -4,14 +4,14 @@ import EventEmitter from "node:events";
 import {withUnified} from "../utils/commander-util.js";
 import {stringChunkify} from "../utils/js-util.js";
 
-export default class Device extends EventEmitter {
-	constructor({port, baudRate}) {
+class SerialDeviceConnection extends EventEmitter {
+	constructor({path, baudRate}) {
 		super();
 
         if (!baudRate)
             baudRate=112500;
 
-		this.port = new SerialPort({path: port, baudRate});
+		this.port = new SerialPort({path, baudRate});
 		this.parser = this.port.pipe(new ReadlineParser({ delimiter: '\n' }));
 		this.nextId = 1;
 		this.pending = new Map();
@@ -43,16 +43,6 @@ export default class Device extends EventEmitter {
 				else resolve(msg.result);
 			}
 		});
-
-		return new Proxy(this, {
-			get: (target, prop) => {
-				// Allow access to internal properties
-				if (prop in target) return target[prop];
-
-				// Otherwise, treat any method call as RPC
-				return (...args) => target.call(prop, args);
-			}
-		});
 	}
 
 	async call(method, params = []) {
@@ -68,6 +58,73 @@ export default class Device extends EventEmitter {
 
 	async close() {
 		await this.port.close();
+	}
+
+	async awaitStarted() {
+	    await new Promise(resolve=>{
+	        this.on("message",message=>{
+	            if (message.type=="started")
+	                resolve();
+	        });
+	    });
+	}
+}
+
+class JsonRpcDeviceConnection {
+	constructor({host, port}) {
+		if (!port)
+			port=80;
+
+		this.url=`http://${host}:${port}/`;
+	}
+
+	async call(method, params=[]) {
+		let response=await fetch(this.url,{
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json"
+			},
+			body: JSON.stringify({
+				method: method,
+				params: params
+			})
+		});
+
+		let resultObj=await response.json();
+		return resultObj.result;
+	}
+
+	async close() {}
+	async awaitStarted() {
+		console.log("Start/stop...");
+
+		//await timeout(1000,async ()=>{
+			await new Promise(r=>setTimeout(r,250));
+			await this.call("getInfo");
+		//});
+	}
+}
+
+export default class Device {
+	constructor({serial, baudRate, host, port}) {
+		if (host)
+			this.connection=new JsonRpcDeviceConnection({host, port})
+
+		else if (serial)
+			this.connection=new SerialDeviceConnection({path: serial, baudRate});
+
+		else throw new Error("Not connection specified");
+
+		return new Proxy(this, {
+			get: (target, prop) => {
+				if (prop in target) return target[prop];
+				return (...args) => target.connection.call(prop, args);
+			}
+		});
+	}
+
+	async close() {
+		await this.connection.close();
 	}
 
     async readFile(fn) {
@@ -95,18 +152,9 @@ export default class Device extends EventEmitter {
     }
 
     async awaitStarted() {
-        await new Promise(resolve=>{
-            this.on("message",message=>{
-                if (message.type=="started")
-                    resolve();
-            });
-        });
+    	await this.connection.awaitStarted();
     }
 }
-
-/*export async function openDevice({port, baudRate}) {
-    return new Device({port, baudRate});
-}*/
 
 export function deviceCommand(fn) {
     return withUnified(async options=>{

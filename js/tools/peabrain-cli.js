@@ -6,7 +6,8 @@ import * as commands from "./peabrain-commands.js";
 program
     .name('peabrain')
     .description('Upload scripts to your ESP32 device')
-    .option('-p, --port <path>', 'serial port path', '/dev/ttyUSB0')
+    .option('-s, --serial <path>', 'serial port path', '/dev/ttyUSB0')
+    .option('-h, --host <host>', 'JSON RPC host')
     .version('0.1.0');
 
 program
