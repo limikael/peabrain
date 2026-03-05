@@ -24,9 +24,9 @@ void setup() {
     // shouldn't be needed: //ui.begin();
 
     //js.addPlugin(&can);
-    //js.addPlugin(&ui);
     js.addPlugin(&net);
     js.addPlugin(&fsPlugin);
+    js.addPlugin(&ui);
 
     Serial.begin(112500);
     if (!SPIFFS.begin(true)) { // true = format if mount fails
