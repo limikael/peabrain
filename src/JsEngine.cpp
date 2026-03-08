@@ -147,6 +147,7 @@ void JsEngine::reset() {
     addGlobal("scheduleReload",newMethod(this,&JsEngine::scheduleReload,1));
     addGlobal("setBootInProgress",newMethod(this,&JsEngine::setBootInProgress,1));
     addGlobal("gc",newMethod(this,&JsEngine::garbageCollect,0));
+    addGlobal("reboot",newMethod(this,&JsEngine::reboot,0));
 
     JSValue global=JS_GetGlobalObject(ctx);
     addGlobal("global",global);
@@ -328,6 +329,11 @@ void JsEngine::loop() {
     }
 }
 
+JSValue JsEngine::reboot(int argc, JSValueConst *argv) {
+    ESP.restart();
+    return JS_UNDEFINED;
+}
+
 JSValue JsEngine::garbageCollect(int argc, JSValueConst *argv) {
 
     JSMemoryUsage before, after;
@@ -347,7 +353,7 @@ JSValue JsEngine::garbageCollect(int argc, JSValueConst *argv) {
 
     return JS_NewInt64(ctx, freed);
 
-    return JS_UNDEFINED;
+    //return JS_UNDEFINED;
 }
 
 JSValue JsEngine::serialWrite(int argc, JSValueConst *argv) {

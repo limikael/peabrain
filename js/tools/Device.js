@@ -144,10 +144,16 @@ export default class Device {
 
     async writeFile(fn, content) {
     	if (content instanceof Uint8Array) {
-			let chunkSize=1024;
+    		//console.log("write bin...");
+
+			let chunkSize=8192; //16384; // //4096;
 	        let fid=await this.fileOpen(fn, "w");
 
+	        //console.log("opened: "+fid);
+
 			for (let i=0; i<content.length; i+=chunkSize) {
+				console.log("write: "+i);
+
 				const chunk=content.subarray(i,i+chunkSize)
 				const b64=Buffer.from(chunk).toString("base64")
 	            await this.fileWriteBase64(fid,b64);

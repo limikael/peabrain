@@ -80,6 +80,7 @@ private:
 	JSValue scheduleReload(int argc, JSValueConst *argv);
 	JSValue garbageCollect(int argc, JSValueConst *argv);
 	JSValue setBootInProgress(int argc, JSValueConst *argv);
+	JSValue reboot(int argc, JSValueConst *argv);
 	void pumpJobs();
 	void reset();
 	void close();

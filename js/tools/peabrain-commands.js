@@ -46,8 +46,10 @@ export async function peabrainStop({device}) {
 }
 
 export async function peabrainFlash({device}) {
-    let data=fs.readFileSync("lab/test.txt");
+    let data=fs.readFileSync(".pio/build/esp32-c3/firmware.bin");
     await device.writeFile("/firmware",data);
+    console.log("uploaded, rebooting...");
+    await device.reboot();
 }
 
 export async function peabrainDeploy({device, file, follow}) {

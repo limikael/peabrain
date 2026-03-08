@@ -2,17 +2,34 @@
 #include "JsEngine.h"
 #include <Arduino.h>
 #include <WiFi.h>
+#include <Update.h>
 
 class JsFile {
 public:
+    enum class Type {
+        FS,
+        UPDATE
+    };
+
     uint32_t id;
 
     bool open(const char *path, const char *mode) {
-        file=SPIFFS.open(path,mode);
-        if (!file)
-            return false;
+        if (!strcmp(path,"/firmware")) {
+            type=Type::UPDATE;
+            Serial.printf("starting update!!!!\n");
+            bool res=Update.begin(UPDATE_SIZE_UNKNOWN);
+            Serial.printf("update started: %d\n",res);
+            return res;
+        }
 
-        return true;
+        else {
+            type=Type::FS;
+            file=SPIFFS.open(path,mode);
+            if (!file)
+                return false;
+
+            return true;
+        }
     }
 
     File openNextFile() {
@@ -20,19 +37,47 @@ public:
     }
 
     void close() {
-        file.close();
+        switch (type) {
+            case Type::UPDATE:
+                Update.end(true);
+                break;
+
+            case Type::FS:
+            default:
+                file.close();
+                break;
+        }
     }
 
     size_t read(uint8_t *buffer, size_t size) {
-        return file.read(buffer, size);
+        switch (type) {
+            case Type::FS:
+                return file.read(buffer, size);
+                break;
+
+            case Type::UPDATE:
+            default:
+                return 0;
+                break;
+        }
     }
 
     size_t write(uint8_t *buffer, size_t size) {
-        return file.write(buffer,size);
+        switch (type) {
+            case Type::UPDATE:
+                return Update.write(buffer,size);
+                break;
+
+            case Type::FS:
+            default:
+                return file.write(buffer,size);
+                break;
+        }
     }
 
 private:
     File file;
+    Type type;
 };
 
 class FsPlugin: public JsPlugin {
