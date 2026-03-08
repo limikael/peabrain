@@ -6,6 +6,32 @@
 class JsFile {
 public:
     uint32_t id;
+
+    bool open(const char *path, const char *mode) {
+        file=SPIFFS.open(path,mode);
+        if (!file)
+            return false;
+
+        return true;
+    }
+
+    File openNextFile() {
+        return file.openNextFile();
+    }
+
+    void close() {
+        file.close();
+    }
+
+    size_t read(uint8_t *buffer, size_t size) {
+        return file.read(buffer, size);
+    }
+
+    size_t write(uint8_t *buffer, size_t size) {
+        return file.write(buffer,size);
+    }
+
+private:
     File file;
 };
 

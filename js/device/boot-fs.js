@@ -12,3 +12,16 @@ global.readdir=(p)=>{
 
 	return a;
 }
+
+global.readFile=(fn)=>{
+	let fid=fileOpen(fn,"r");
+	let s="",chunk;
+
+	do {
+		chunk=fileRead(fid,64);
+		s+=chunk;
+	} while (chunk.length)
+
+	fileClose(fid);
+	return s;
+}

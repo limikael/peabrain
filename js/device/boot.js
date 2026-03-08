@@ -39,19 +39,8 @@ global.getInfo=()=>{
 
 global.loadSettings=()=>{
 	global.settings={};
-
-	if (fileExists("/settings.json")) {
-		let fid=fileOpen("/settings.json","r");
-		let s="",chunk;
-
-		do {
-			chunk=fileRead(fid,64);
-			s+=chunk;
-		} while (chunk.length)
-
-		fileClose(fid);
-		global.settings=JSON.parse(s);
-	}
+	if (fileExists("/settings.json"))
+		global.settings=JSON.parse(readFile("/settings.json"));
 
 	if (global.settings.wifiSsid)
 		wifiConnect(global.settings.wifiSsid,global.settings.wifiPassword);
