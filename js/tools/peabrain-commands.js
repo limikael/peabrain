@@ -2,6 +2,7 @@ import path from "node:path";
 import {esbuildGlobalImportPlugin} from "../utils/esbuild-util.js";
 import {getDirname} from "../utils/node-util.js";
 import * as esbuild from "esbuild";
+import fs from "node:fs";
 
 const __dirname=getDirname(import.meta.url);
 
@@ -42,6 +43,11 @@ export async function peabrainStart({device}) {
 export async function peabrainStop({device}) {
     await device.scheduleReload(false);
     await device.awaitStarted();
+}
+
+export async function peabrainFlash({device}) {
+    let data=fs.readFileSync("lab/test.txt");
+    await device.writeFile("/firmware",data);
 }
 
 export async function peabrainDeploy({device, file, follow}) {

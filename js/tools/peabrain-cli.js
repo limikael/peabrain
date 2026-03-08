@@ -57,4 +57,9 @@ program
     .option('-f, --follow', 'keep port open')
     .action(deviceCommand(commands.peabrainDeploy));
 
+program
+    .command("flash")
+    .description("Flash firmware runtime.")
+    .action(deviceCommand(commands.peabrainFlash));
+
 await program.parseAsync(process.argv);

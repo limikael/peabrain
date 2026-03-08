@@ -8,8 +8,8 @@
 #include "SPIFFS.h"
 
 JsEngine js(Serial);
-CanPlugin can(5,4);
-UiPlugin ui;
+/*CanPlugin can(5,4);
+UiPlugin ui;*/
 NetPlugin net;
 FsPlugin fsPlugin;
 
@@ -21,12 +21,10 @@ void myTask(void *arg) {
 }
 
 void setup() {
-    // shouldn't be needed: //ui.begin();
-
     //js.addPlugin(&can);
+    //js.addPlugin(&ui);
     js.addPlugin(&net);
     js.addPlugin(&fsPlugin);
-    js.addPlugin(&ui);
 
     Serial.begin(112500);
     if (!SPIFFS.begin(true)) { // true = format if mount fails

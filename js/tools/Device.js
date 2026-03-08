@@ -143,12 +143,26 @@ export default class Device {
     }
 
     async writeFile(fn, content) {
-        let chunks=stringChunkify(content,64);
-        let fid=await this.fileOpen(fn, "w");
-        for (let chunk of chunks)
-            await this.fileWrite(fid,chunk);
+    	if (content instanceof Uint8Array) {
+			let chunkSize=1024;
+	        let fid=await this.fileOpen(fn, "w");
 
-        await this.fileClose(fid);
+			for (let i=0; i<content.length; i+=chunkSize) {
+				const chunk=content.subarray(i,i+chunkSize)
+				const b64=Buffer.from(chunk).toString("base64")
+	            await this.fileWriteBase64(fid,b64);
+			}
+	        await this.fileClose(fid);
+    	}
+
+    	else {
+	        let chunks=stringChunkify(content,64);
+	        let fid=await this.fileOpen(fn, "w");
+	        for (let chunk of chunks)
+	            await this.fileWrite(fid,chunk);
+
+	        await this.fileClose(fid);
+    	}
     }
 
     async awaitStarted() {

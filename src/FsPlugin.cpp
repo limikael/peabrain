@@ -1,6 +1,7 @@
 #include "FsPlugin.h"
 #include <stdlib.h>
 #include <WiFi.h>
+#include "base64.h"
 
 FsPlugin::FsPlugin() {
 }
@@ -15,6 +16,7 @@ void FsPlugin::init() {
     jsEngine->addGlobal("fileRead",jsEngine->newMethod(this,&FsPlugin::fileRead,1));
     jsEngine->addGlobal("fileReadDirEnt",jsEngine->newMethod(this,&FsPlugin::fileReadDirEnt,1));
     jsEngine->addGlobal("fileWrite",jsEngine->newMethod(this,&FsPlugin::fileWrite,1));
+    jsEngine->addGlobal("fileWriteBase64",jsEngine->newMethod(this,&FsPlugin::fileWriteBase64,1));
     jsEngine->addGlobal("fileExists",jsEngine->newMethod(this,&FsPlugin::fileExists,1));
     jsEngine->addGlobal("fileUnlink",jsEngine->newMethod(this,&FsPlugin::fileUnlink,1));
 }
@@ -93,6 +95,28 @@ JSValue FsPlugin::fileWrite(int argc, JSValueConst *argv) {
     //it->file.print("helloooo");
     //it->file.write((uint8_t *)data.c_str(),strlen(data.c_str()));
     it->file.print(data.c_str());
+    return JS_UNDEFINED;
+}
+
+JSValue FsPlugin::fileWriteBase64(int argc, JSValueConst *argv) {
+    if (argc!=2)
+        return JS_ThrowInternalError(jsEngine->getContext(),"invalid arg count");
+
+    uint32_t fid;
+    JS_ToUint32(jsEngine->getContext(),&fid,argv[0]);
+    JsCString data(jsEngine->getContext(),argv[1]);
+
+    auto it=std::find_if(files.begin(), files.end(),
+        [&](const JsFile& f) { return f.id == fid; });
+
+    if (it==files.end())
+        return JS_ThrowInternalError(jsEngine->getContext(),"invalid file id");
+
+    size_t data_len=strlen(data.c_str());
+    uint8_t decoded[base64_get_max_decoded_size(data_len)];
+    size_t decoded_len=base64_decode(data.c_str(),data_len,decoded);
+
+    it->file.write(decoded,decoded_len);
     return JS_UNDEFINED;
 }
 

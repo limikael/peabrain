@@ -1,5 +1,6 @@
 import Repl from "./Repl.js";
 import EventEmitter from "../utils/EventEmitter.js";
+import "./boot-fs.js";
 
 global.EventEmitter=EventEmitter;
 
@@ -34,21 +35,6 @@ global.getInfo=()=>{
 		wifiStatus: wifiGetStatus(),
 		ip: wifiGetIp()
 	});
-}
-
-global.readdir=(p)=>{
-	let f=fileOpen(p,"r");
-	let a=[];
-
-	let s=fileReadDirEnt(f);
-	while (s) {
-		a.push(s);
-		s=fileReadDirEnt(f);
-	}
-
-	fileClose(f);
-
-	return a;
 }
 
 global.loadSettings=()=>{
