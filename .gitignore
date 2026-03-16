@@ -6,3 +6,5 @@ ext
 pnpm-lock.yaml
 src/boot_js.c
 bin
+uv.lock
+.python-version

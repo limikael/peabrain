@@ -2,16 +2,14 @@
 
 UiPlugin::UiPlugin():
 		lcd(0x27,20,4),
-        encoder(20,21),
-        button(10),
+//        button(10),
         lcdController(lcd) {
     buttonFunc=JS_UNDEFINED;
     encoderFunc=JS_UNDEFINED;
 }
 
 void UiPlugin::begin() {
-	Wire.begin(8, 9); 
-	//Wire.setClock(100000);
+    Wire.begin(sdaPin, slcPin); 
     Wire.setClock(400000);
     lcd.init();
     lcd.backlight();
@@ -19,8 +17,12 @@ void UiPlugin::begin() {
     lcd.setCursor(0,0);
     //lcd.print("Starting...");
 
+    encoder.pinA=encoderPinA;
+    encoder.pinB=encoderPinB;
     encoder.begin();
-    //button.begin(); <-- not a function
+
+    button.pin=buttonPin;
+    button.begin();
 }
 
 void UiPlugin::setJsEngine(JsEngine& jsEngine_) {

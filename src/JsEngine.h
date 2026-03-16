@@ -1,5 +1,7 @@
 #pragma once
 #include <Arduino.h>
+#include <Preferences.h>
+
 extern "C" {
 #include "quickjs.h"
 }
@@ -66,6 +68,7 @@ public:
 	JSValue getExceptionMessage();
 	void printJsValue(JSValue val);
 	int getNewResourceId();
+	void setPrefs(Preferences *prefs_) { prefs=prefs_; };
 
 private:
 	JSValue digitalWrite(int argc, JSValueConst *argv);
@@ -81,6 +84,7 @@ private:
 	JSValue garbageCollect(int argc, JSValueConst *argv);
 	JSValue setBootInProgress(int argc, JSValueConst *argv);
 	JSValue reboot(int argc, JSValueConst *argv);
+	JSValue prefsGet(int args, JSValueConst *argv);
 	void pumpJobs();
 	void reset();
 	void close();
@@ -98,4 +102,5 @@ private:
 	uint32_t resourceCount;
 	bool runEnabled=true;
 	bool bootInProgress=false;
+	Preferences *prefs=nullptr;
 };

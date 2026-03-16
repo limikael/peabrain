@@ -4,18 +4,19 @@
 class DebouncePin {
 public:
     explicit DebouncePin(
-        uint8_t pin,
+        int8_t pin = -1,
         bool pullup = true,
         unsigned long debounceMs = 20
     );
 
     bool getValue() const;
     bool didChange();
-
     void update(); // optional manual update
+    void begin();
+
+    int8_t pin=-1;
 
 private:
-    uint8_t _pin;
     unsigned long _debounceMs;
 
     bool _value;        // debounced (stable) value

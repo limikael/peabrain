@@ -1,11 +1,11 @@
 #include "DebouncePin.h"
 
 DebouncePin::DebouncePin(
-    uint8_t pin,
+    int8_t pin_,
     bool pullup,
     unsigned long debounceMs
 )
-    : _pin(pin),
+    : pin(pin_),
       _debounceMs(debounceMs),
       _changed(false),
       _lastChangeTime(0)
@@ -16,9 +16,13 @@ DebouncePin::DebouncePin(
     _value   = _lastRaw;
 }
 
+void DebouncePin::begin() {
+    pinMode(pin, INPUT_PULLUP); //pullup ? INPUT_PULLUP : INPUT);
+}
+
 bool DebouncePin::readRaw() const {
     // If using INPUT_PULLUP, LOW = pressed
-    return digitalRead(_pin) == HIGH;
+    return digitalRead(pin) == HIGH;
 }
 
 void DebouncePin::update() {

@@ -15,6 +15,10 @@ public:
     virtual ~UiPlugin() {}
     void begin();
 
+    int sdaPin=-1,slcPin=-1;
+    int encoderPinA=-1,encoderPinB=-1;
+    int buttonPin=-1;
+
 private:
     JSValue displayUpdate(int argc, JSValueConst *argv);
     JSValue displayWrite(int argc, JSValueConst *argv);

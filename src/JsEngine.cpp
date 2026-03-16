@@ -137,6 +137,7 @@ void JsEngine::reset() {
 
     addGlobal("digitalWrite",newMethod(this,&JsEngine::digitalWrite,2));
     addGlobal("digitalRead",newMethod(this,&JsEngine::digitalRead,1));
+    addGlobal("prefsGet",newMethod(this,&JsEngine::prefsGet,1));
     addGlobal("pinMode",newMethod(this,&JsEngine::pinMode,2));
     addGlobal("serialWrite",newMethod(this,&JsEngine::serialWrite,1));
     addGlobal("setTimeout",newMethod(this,&JsEngine::setTimeout,2));
@@ -377,6 +378,21 @@ JSValue JsEngine::setSerialDataFunc(int argc, JSValueConst *argv) {
     serialDataFunc=JS_DupValue(ctx, argv[0]);
 
     return JS_UNDEFINED;
+}
+
+JSValue JsEngine::prefsGet(int args, JSValueConst *argv) {
+    const char *key=JS_ToCString(ctx, argv[0]);
+
+    if (!prefs->isKey(key)) {
+        Serial.printf("key doesn't exist!!!");
+        JS_FreeCString(ctx,key);
+        return JS_UNDEFINED;
+    }
+
+    JSValue val=JS_NewUint32(ctx,prefs->getUChar(key));
+    JS_FreeCString(ctx,key);
+
+    return val;
 }
 
 JSValue JsEngine::digitalRead(int argc, JSValueConst *argv) {

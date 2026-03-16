@@ -11,6 +11,8 @@ static const int8_t transitionTable[16] = {
 Encoder::Encoder(int a, int b)
     : pinA(a), pinB(b) {}
 
+Encoder::Encoder() {}
+
 void Encoder::begin() {
     pinMode(pinA, INPUT_PULLUP);
     pinMode(pinB, INPUT_PULLUP);
