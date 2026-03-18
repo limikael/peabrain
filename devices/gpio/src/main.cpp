@@ -2,6 +2,7 @@
 #include "SoftTimer.h"
 #include "canopener.h"
 #include "Blinker.h"
+#include <Preferences.h>
 
 using namespace canopener;
 
@@ -11,14 +12,26 @@ SoftTimer timer(100);
 EspBus espBus(5,4);
 Blinker blink; //(8,100);
 Device dev(espBus);
+Preferences prefs;
 
 int gpioPins[8]={0,1,3,6,7,10,20,21};
 
 void setup() {
     Serial.begin(112500);
-    //hardError="hello";
     blink.setPin(8);
-    dev.setNodeId(7);
+    if (!prefs.begin("config",true)) {
+        hardError="Config section missing";
+        return;
+    }
+
+    if (!prefs.isKey("statusLedPin") ||
+            !prefs.isKey("deviceId")) {
+        hardError="Config keys missing";
+        return;
+    }
+
+    blink.setPin(prefs.getUChar("statusLedPin"));
+    dev.setNodeId(prefs.getUChar("deviceId"));
 
     for (int i=0; i<7; i++) {
         dev.insert(0x6001,i+1); // input
@@ -28,12 +41,16 @@ void setup() {
 }
 
 void loop() {
-    /*if (timer.tick()) {
-        Serial.printf("input: %d, output: %d, input_pullup: %d\n",INPUT,OUTPUT,INPUT_PULLUP);
-    }*/
+    blink.loop();
+    if (hardError) {
+        blink.setPattern("x x x x x ");
+        if (errorTimer.tick())
+            Serial.printf("%s\n",hardError);
+
+        return;
+    }
 
     espBus.loop();
-    blink.loop();
 
     for (int i=0; i<7; i++) {
         int mode=INPUT;
@@ -48,13 +65,7 @@ void loop() {
         dev.at(0x6001,i+1).set(digitalRead(gpioPins[i]));
     }
 
-    if (hardError) {
-	    blink.setPattern("x x x x x ");
-        if (errorTimer.tick())
-            Serial.printf("%s\n",hardError);
-    }
-
-    else if (!espBus.isConnected())
+    if (!espBus.isConnected())
         blink.setPattern("xxxxxxxxx ");
 
     else if (dev.getState()!=Device::OPERATIONAL)

@@ -9,11 +9,12 @@
     "peabrain": "peabrain deploy --port=/dev/ttyESP-58:8C:81:AD:2B:B0 lab/blink.js",
     "lab": "pnpm flash && pnpm peabrain",
     "test": "make -j4 test",
-    "nvs": "./scripts/nvs.js"
+    "nvs": "flashnvs -p/dev/ttyESP-58:8C:81:AD:2B:B0 -fnvs.json"
   },
   "bin": {
     "peabrain": "js/tools/peabrain-cli.js",
-    "peabind": "js/tools/peabind-cli.js"
+    "peabind": "js/tools/peabind-cli.js",
+    "flashnvs": "js/tools/flashnvs-cli.js"
   },
   "exports": {
     ".": {

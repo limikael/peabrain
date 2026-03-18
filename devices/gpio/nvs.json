@@ -1,0 +1,6 @@
+{
+	"statusLedPin": 8,
+	"deviceId": 7,
+	"canTxPin": 5,
+	"canRxPin": 4
+}

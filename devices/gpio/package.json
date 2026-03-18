@@ -1,0 +1,8 @@
+{
+  "name": "peabrain-gpio",
+  "private": "true",
+  "scripts": {
+    "nvs": "flashnvs --port=/dev/ttyESP-50:78:7D:8F:D7:E4 -fnvs.json",
+    "flash": "pio run --target=upload"
+  }
+}

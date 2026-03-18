@@ -1,0 +1,8 @@
+{
+	"statusLedPin": 8,
+	"sdaPin": 8,
+	"slcPin": 9,
+	"encoderPinA": 20,
+	"encoderPinB": 21,
+	"buttonPin": 10
+}

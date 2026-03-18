@@ -1,8 +1,0 @@
-key,type,encoding,value
-config,namespace,,
-statusLedPin,data,u8,8
-sdaPin,data,u8,8
-slcPin,data,u8,9
-encoderPinA,data,u8,20
-encoderPinB,data,u8,21
-buttonPin,data,u8,10
