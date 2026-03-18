@@ -1,0 +1,13 @@
+peabrain
+  src/ <-- source code for the "main controller" goes here
+  platformio.ini <-- main controller platformio.ini file
+  lib/ <-- shared source, used by the main controller as well as the devices
+  devices/
+    gpio/ <-- source code for the gpio device
+      platformio.ini <-- deploy the gpio device
+      src/ <-- source code for the gpio device
+      lib/ <-- symlink to ../../lib
+    motor/ <-- source code for the motor device
+      platformio.ini <-- deploy the motor device
+      src/
+      lib/ <-- symlink to ../../lib

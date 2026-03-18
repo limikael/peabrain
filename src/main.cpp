@@ -1,7 +1,7 @@
 #include "JsEngine.h"
 #include "CanPlugin.h"
 #include "UiPlugin.h"
-#include "NetPlugin.h"
+//#include "NetPlugin.h"
 #include "FsPlugin.h"
 #include <Arduino.h>
 #include <Preferences.h>
@@ -10,9 +10,9 @@
 #include "SoftTimer.h"
 
 JsEngine js(Serial);
-//CanPlugin can(5,4);
+CanPlugin can(5,4);
 UiPlugin ui;
-NetPlugin net;
+//NetPlugin net;
 FsPlugin fsPlugin;
 Preferences prefs;
 const char *hardError;
@@ -50,9 +50,9 @@ void setup() {
 
     js.setPrefs(&prefs);
 
-    //js.addPlugin(&can);
+    js.addPlugin(&can);
     js.addPlugin(&ui);
-    js.addPlugin(&net);
+    //js.addPlugin(&net);
     js.addPlugin(&fsPlugin);
 
     if (!SPIFFS.begin(true)) { // true = format if mount fails
