@@ -55,7 +55,7 @@ void loop() {
     }
 
     else if (!espBus.isConnected())
-        blink.setPattern("x x       ");
+        blink.setPattern("xxxxxxxxx ");
 
     else if (dev.getState()!=Device::OPERATIONAL)
         blink.setPattern("x         ");
