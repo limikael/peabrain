@@ -4,3 +4,4 @@ export * from "../ui/components.jsx";
 export * from "../can/device-proxy.js";
 export {default as EventEmitter} from "../utils/EventEmitter.js";
 export {default as GPIO_PROFILE} from "../can/gpio-profile.js";
+export {default as MOTOR_PROFILE} from "../can/motor-profile.js";

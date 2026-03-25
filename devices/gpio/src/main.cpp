@@ -6,9 +6,9 @@
 
 using namespace canopener;
 
-const char *hardError;
+const char *hardError=nullptr;
 SoftTimer errorTimer(100);
-SoftTimer timer(100);
+//SoftTimer timer(100);
 EspBus espBus(5,4);
 Blinker blink; //(8,100);
 Device dev(espBus);

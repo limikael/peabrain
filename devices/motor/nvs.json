@@ -1,0 +1,10 @@
+{
+	"statusLedPin": 8,
+	"deviceId": 60,
+	"enaPin": 6,
+	"dirPin": 10,
+	"pulPin": 9,
+	"m0Pin": 0,
+	"m1Pin": 1,
+	"m2Pin": 3
+}
