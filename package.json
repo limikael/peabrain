@@ -4,38 +4,28 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build:boot": "./js/device/generate-boot.js",
-    "flash": "pnpm build:boot && pio run --target=upload",
-    "peabrain": "peabrain deploy --port=/dev/ttyESP-58:8C:81:AD:2B:B0 lab/blink.js",
-    "lab": "pnpm flash && pnpm peabrain",
-    "test": "make -j4 test",
-    "nvs": "flashnvs -p/dev/ttyESP-58:8C:81:AD:2B:B0 -fnvs.json"
+    "flash": "peabrain flash"
   },
   "bin": {
-    "peabrain": "js/tools/peabrain-cli.js",
-    "peabind": "js/tools/peabind-cli.js",
-    "flashnvs": "js/tools/flashnvs-cli.js"
+    "peabrain": "js/tools/peabrain-cli.js"
   },
+  "packages": "packages",
   "exports": {
     ".": {
       "node": "./js/exports/exports-node.js",
       "mcu": "./js/exports/exports.js"
-    }
+    },
+    "./peakernel-project-hooks": "./js/tools/peabrain-commands.js"
   },
   "type": "module",
-  "keywords": [],
+  "keywords": [
+    "peakernel-plugin"
+  ],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.12.1",
   "dependencies": {
-    "@serialport/parser-readline": "^13.0.0",
-    "canopener": "link:../../Repo/canopener",
-    "commander": "^14.0.2",
-    "esbuild": "^0.27.2",
-    "json5": "^2.2.3",
-    "serialport": "^13.0.0"
-  },
-  "devDependencies": {
-    "ini": "^6.0.0"
+    "commander": "^14.0.3",
+    "peakernel": "^1.0.0"
   }
 }

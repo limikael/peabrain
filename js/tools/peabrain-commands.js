@@ -1,88 +1,44 @@
-import path from "node:path";
-import {esbuildGlobalImportPlugin} from "../utils/esbuild-util.js";
-import {getDirname} from "../utils/node-util.js";
-import * as esbuild from "esbuild";
 import fs from "node:fs";
+import path from "node:path";
+import {dirnameFromImportMeta} from "../utils/node-util.js";
 
-const __dirname=getDirname(import.meta.url);
+let __dirname=dirnameFromImportMeta(import.meta);
 
-export async function peabrainInfo({device}) {
-    let info=await device.getInfo();
-    console.log(JSON.stringify(info,null,2));
+export async function build(ev) {
+	ev.setBoard("esp32-c3-devkitm-1");
 }
 
-export async function peabrainLs({device, dir}) {
-    let dirContent=await device.readdir(dir);
-    console.log(JSON.stringify(dirContent,null,2));
-}
+init.priority=5;
+export async function init() {
+	console.log("Init peabrain project...");
 
-export async function peabrainCat({device, file}) {
-    let content=await device.readFile(file);
-    console.log(content);
-}
+    let cwd=process.cwd();
 
-export async function peabrainSet({device, name, value}) {
-    let config={};
-    if (await device.fileExists("/settings.json"))
-        config=JSON.parse(await device.readFile("/settings.json"));
+    let packageJsonPath=path.join(cwd,"package.json");
+    if (fs.existsSync(packageJsonPath))
+        throw new DeclaredError("package.json already exists...");
 
-    config[name]=value;
-    await device.writeFile("/settings.json",JSON.stringify(config,null,2));
-    await device.loadSettings();
-}
-
-export async function peabrainRm({device, file}) {
-    await device.fileUnlink(file);
-}
-
-export async function peabrainStart({device}) {
-    await device.scheduleReload();
-    await device.awaitStarted();
-}
-
-export async function peabrainStop({device}) {
-    await device.scheduleReload(false);
-    await device.awaitStarted();
-}
-
-export async function peabrainFlash({device}) {
-    let data=fs.readFileSync(".pio/build/esp32-c3/firmware.bin");
-    await device.writeFile("/firmware",data);
-    console.log("uploaded, rebooting...");
-    await device.reboot();
-}
-
-export async function peabrainDeploy({device, file, follow}) {
-    console.log(`Deploy: ${file}`);
-
-    let jsxRuntimeFn=path.join(__dirname,"../ui/jsx-runtime.js");
-    let peabrainExportsFn=path.join(__dirname,"../exports/exports.js");
-    const result = await esbuild.build({
-        entryPoints: [file],
-        jsx: "automatic",
-        jsxImportSource: "peabrian-jsx",
-        minify: true,
-        bundle: true,
-        write: false,
-        platform: "neutral",
-        //format: "esm",
-        format: "iife",
-        conditions: ["mcu", "import", "default"],
-        alias: {
-            "peabrian-jsx/jsx-runtime": jsxRuntimeFn,
-            "peabrian-jsx/jsx-dev-runtime": jsxRuntimeFn,
-            "peabrain": peabrainExportsFn
+    let toolPkg=JSON.parse(fs.readFileSync(path.join(__dirname,"../../package.json")));
+    let pkg={
+        "name": path.basename(cwd),
+        "type": "module",
+        "scripts": {
+            "flash": "peabrain flash"
+        },
+        "dependencies": {
+            "peabrain": `^${toolPkg.version}`
         }
-    });
+    }
 
-    let source=new TextDecoder("utf-8").decode(result.outputFiles[0].contents);
-    //console.log(source);
+    fs.writeFileSync(path.join(cwd,"package.json"),JSON.stringify(pkg,null,2));
 
-    console.log(`Size: ${source.length} bytes`);
-    await peabrainStop({device});
-    await device.writeFile("/boot.js",source);
-    await peabrainStart({device});
+    let dotEnv=`
+        # Port 
+        # PEAKERNEL_PORT=/dev/ttyACM0
+    `.split("\n").map(s=>s.trim()).join("\n");
 
-    if (follow)
-        await new Promise(r=>{});
+    fs.writeFileSync(path.join(cwd,".env"),dotEnv);
+
+    //console.log("ret true...");
+	return true;
 }

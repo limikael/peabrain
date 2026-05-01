@@ -1,0 +1,9 @@
+{
+	"name": "peabrain-ui",
+	"description": "Desplay / rotary knob",
+	"keywords": ["peakernel-plugin"],
+	"type": "module",
+	"exports": {
+		"./peakernel-project-hooks": "./build.js"
+	}
+}

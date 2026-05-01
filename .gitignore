@@ -1,3 +1,4 @@
+.target
 target
 lib
 node_modules
@@ -8,3 +9,4 @@ src/boot_js.c
 bin
 uv.lock
 .python-version
+pnpm-workspace.yaml

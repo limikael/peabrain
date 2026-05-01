@@ -1,0 +1,10 @@
+{
+  "name": "basic",
+  "type": "module",
+  "scripts": {
+    "flash": "peakernel flash"
+  },
+  "dependencies": {
+    "peabrain": "^1.0.0"
+  }
+}
