@@ -76,3 +76,4 @@ Instead of dealing with registers and object dictionaries:
 ```js
 motor.targetPosition = 1000;
 await motor.waitUntilReached();
+```
