@@ -15,6 +15,7 @@ void ui_start() {
 void ui_loop() {
     getUiKnob()->loop();
     getUiButton()->loop();
+    Lcd::getInstance()->loop();
 }
 
 std::shared_ptr<EncoderKnob> getUiKnob() {

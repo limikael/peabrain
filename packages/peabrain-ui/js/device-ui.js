@@ -79,12 +79,6 @@ export class DeviceUi {
 			this.buttonCount++;
 			this.refreshPromise.resolve();
 		});
-
-		/*setEncoderFunc(()=>this.refreshPromise.resolve());
-		setButtonFunc(()=>{
-			this.buttonCount++;
-			this.refreshPromise.resolve();
-		});*/
 	}
 
 	setLines(lines) {
@@ -114,7 +108,7 @@ export class DeviceUi {
 	async run() {
 		while (1) {
 			this.refreshPromise=new ResolvablePromise();
-			console.log("render...");
+			//console.log("render...");
 			this.refresh();
 			await this.refreshPromise;
 		}

@@ -9,7 +9,10 @@ public:
 	static std::shared_ptr<Lcd> getInstance();
 	void reset();
 	void setBuffer(std::string s);
+	void loop();
 
 private:
+	int scanX,scanY;
+	std::string buffer,written;
 	LiquidCrystal_I2C lcd;
 };
