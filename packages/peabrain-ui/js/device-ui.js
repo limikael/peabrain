@@ -92,8 +92,6 @@ export class DeviceUi {
 			line=line.padEnd(20);
 			line=line.slice(0,20);
 			s+=line;
-//			displaySetCursor(0,i);
-//			displayWrite(line);
 		}
 
 		Lcd.getInstance().setBuffer(s);

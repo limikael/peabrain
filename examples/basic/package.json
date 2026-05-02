@@ -7,8 +7,5 @@
   },
   "dependencies": {
     "peabrain": "^1.0.0"
-  },
-  "disablePlugins": [
-    "pk-littlefs"
-  ]
+  }
 }
