@@ -2,7 +2,8 @@
   "name": "basic",
   "type": "module",
   "scripts": {
-    "flash": "peakernel flash"
+    "flash": "peakernel flash",
+    "deploy": "peakernel deploy"
   },
   "dependencies": {
     "peabrain": "^1.0.0"
