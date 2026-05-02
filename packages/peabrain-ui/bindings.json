@@ -1,0 +1,37 @@
+{
+	"include": ["Lcd.h","peabrain-ui.h"],
+	"classes": {
+		"Lcd": {
+			"constructible": false,
+			"methods": {
+				"getInstance": {"return": "Lcd", "static": true},
+				"setBuffer": {"args": ["string"]}
+			}
+		},
+		"EncoderKnob": {
+			"constructible": false,
+			"methods": {
+				"getValue": {"return": "int"}
+			},
+			"events": {
+				"change": {"dispatcher": "changeEvent", "args": ["int"]}
+			}
+		},
+		"DebouncePin": {
+			"constructible": false,
+			"methods": {
+				"getValue": {"return": "int"}
+			},
+			"events": {
+				"change": {"dispatcher": "changeEvent", "args": ["int"]},
+				"down": {"dispatcher": "downEvent"},
+				"up": {"dispatcher": "upEvent"}
+			}
+		}
+	},
+	"functions": {
+		"getUiKnob": {"return": "EncoderKnob"},
+		"getUiButton": {"return": "DebouncePin"}
+	}
+}
+
