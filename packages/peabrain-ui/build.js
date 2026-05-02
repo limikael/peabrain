@@ -15,3 +15,14 @@ export async function build(ev) {
 	ev.addLoopFunction("ui_loop");
 	ev.addLibDep("https://github.com/markub3327/LiquidCrystal_I2C");
 }
+
+export async function bundleConf(ev) {
+	//console.log(ev);
+	//console.log("conf bundle in: "+ev.cwd);
+
+	ev.esbuildConfig.jsx="automatic";
+    ev.esbuildConfig.jsxImportSource="peabrain-ui-jsx";
+    ev.esbuildConfig.alias["peabrain-ui-jsx/jsx-runtime"]=path.join(__dirname,"js/jsx-runtime.js");
+    ev.esbuildConfig.alias["peabrain-ui-jsx/jsx-dev-runtime"]=path.join(__dirname,"js/jsx-runtime.js");
+    ev.esbuildConfig.alias["peabrain-ui"]=path.join(__dirname,"js/exports-mcu.js");
+}
