@@ -59,7 +59,7 @@ export class DeviceUi {
 		this.refreshPromise=new ResolvablePromise();
 
 		this.reactiveTui=createReactiveTui(element);
-		this.reactiveTui.on("refresh",()=>this.refreshPromise.resolve());
+		this.reactiveTui.setOnRefresh(()=>this.refreshPromise.resolve());
 		this.buttonCount=0;
 
 		getUiKnob().on("change",()=>this.refreshPromise.resolve());

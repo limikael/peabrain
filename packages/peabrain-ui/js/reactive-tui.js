@@ -1,5 +1,3 @@
-import EventEmitter from "./EventEmitter.js";
-
 export function useEffect(fn) {
 	let cleanup=useRef();
 	useMount(()=>{
@@ -26,7 +24,7 @@ function useUnmount(fn) {
 
 export function useRefresh() {
 	let reactiveTui=useRenderInstance();
-	return (()=>reactiveTui.emit("refresh"));
+	return (()=>reactiveTui.notifyRefresh());
 }
 
 export function useState(initial) {
@@ -35,7 +33,7 @@ export function useState(initial) {
 
 	function setter(value) {
 		ref.current=value;
-		reactiveTui.emit("refresh");
+		reactiveTui.notifyRefresh();
 	}
 
 	return [ref.current,setter];
@@ -112,11 +110,10 @@ export function createContext() {
 	return context;
 }
 
-export class ReactiveTui extends EventEmitter {
+export class ReactiveTui {
 	static renderInstance;
 
 	constructor(topComponent) {
-		super();
 		this.topComponent=topComponent;
 		this.vnodes={};
 		this.contexts=new Map();
@@ -166,6 +163,15 @@ export class ReactiveTui extends EventEmitter {
 		content=content.flat(Infinity);
 
 		return content;
+	}
+
+	setOnRefresh(fn) {
+		this.onRefresh=fn;
+	}	
+
+	notifyRefresh() {
+		if (this.onRefresh)
+			this.onRefresh();
 	}
 }
 
