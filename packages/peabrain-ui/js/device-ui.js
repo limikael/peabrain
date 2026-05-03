@@ -24,19 +24,8 @@ export function useEncoderDelta() {
 }
 
 export function useClampedEncoder(min, max) {
-	let encoder=useEncoder();
-	let currentRef=useRef();
 	let valueRef=useRef(min);
-	if (currentRef.current===undefined)
-		currentRef.current=encoder;
-
-	let delta=encoder-currentRef.current;
-	if (delta>32)
-		delta-=64;
-
-	if (delta<-32)
-		delta+=64;
-	//console.log("delta: "+delta);
+	let delta=useEncoderDelta();
 
 	valueRef.current+=delta;
 	if (valueRef.current<min)
@@ -45,7 +34,6 @@ export function useClampedEncoder(min, max) {
 	if (valueRef.current>=max)
 		valueRef.current=max-1;
 
-	currentRef.current=encoder;
 	return valueRef.current;
 }
 
@@ -83,16 +71,8 @@ export class DeviceUi {
 
 	setLines(lines) {
 		let s="";
-
-		for (let i=0; i<4; i++) {
-			let line=lines[i];
-			if (!line)
-				line="";
-
-			line=line.padEnd(20);
-			line=line.slice(0,20);
-			s+=line;
-		}
+		for (let i=0; i<4; i++)
+			s+=(lines[i]??"").slice(0,20).padEnd(20);
 
 		Lcd.getInstance().setBuffer(s);
 	}

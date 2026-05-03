@@ -22,7 +22,6 @@ function useUnmount(fn) {
 	hookIndex=useHookIndex();
 
 	vnode.unmounts[hookIndex]=fn;
-
 }
 
 export function useRefresh() {
