@@ -141,6 +141,58 @@ export class ReactiveTui {
 		return content;
 	}
 
+	/*renderNode(root, rootPath) {
+	    let stack = [{ node: root, path: rootPath }];
+	    let output = [];
+
+	    while (stack.length > 0) {
+	        let { node, path } = stack.pop();
+
+	        // primitives
+	        if (typeof node === "string" || typeof node === "number") {
+	            output.push(String(node));
+	            continue;
+	        }
+
+	        // arrays → push children
+	        if (Array.isArray(node)) {
+	            for (let i = node.length - 1; i >= 0; i--) {
+	                stack.push({
+	                    node: node[i],
+	                    path: path + "/#" + i
+	                });
+	            }
+	            continue;
+	        }
+
+	        // component node
+	        let nodePath = path + "/" + node.type.name;
+
+	        this.activePaths.push(nodePath);
+	        this.renderPath = nodePath;
+	        this.hookIndex = 0;
+	        ReactiveTui.renderInstance.renderPath = nodePath;
+
+	        let rendered = node.type({
+	            children: node.children,
+	            ...node.props
+	        });
+
+	        if (node.type.postRender)
+	            node.type.postRender();
+
+	        ReactiveTui.renderInstance.renderPath = undefined;
+
+	        // instead of recursion: push result back into stack
+	        stack.push({
+	            node: rendered,
+	            path: nodePath
+	        });
+	    }
+
+	    return output;
+	}*/
+
 	render() {
 		ReactiveTui.renderInstance=this;
 
