@@ -12,13 +12,17 @@ SoftTimer errorTimer(100);
 EspBus espBus(5,4);
 Blinker blink; //(8,100);
 Device dev(espBus);
-Preferences prefs;
-
 int gpioPins[8]={0,1,3,6,7,10,20,21};
+
+#ifdef SETTINGS_FROM_NVS
+Preferences prefs;
+#endif
 
 void setup() {
     Serial.begin(112500);
     blink.setPin(8);
+
+#ifdef SETTINGS_FROM_NVS
     if (!prefs.begin("config",true)) {
         hardError="Config section missing";
         return;
@@ -32,6 +36,10 @@ void setup() {
 
     blink.setPin(prefs.getUChar("statusLedPin"));
     dev.setNodeId(prefs.getUChar("deviceId"));
+#else
+    blink.setPin(8);
+    dev.setNodeId(5);
+#endif
 
     for (int i=0; i<7; i++) {
         dev.insert(0x6001,i+1); // input

@@ -26,6 +26,7 @@
   "packageManager": "pnpm@10.12.1",
   "dependencies": {
     "commander": "^14.0.3",
-    "peakernel": "^1.0.0"
+    "peakernel": "^1.0.0",
+    "canopener": "^1.0.0"
   }
 }
