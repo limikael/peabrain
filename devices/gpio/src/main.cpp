@@ -9,9 +9,9 @@ using namespace canopener;
 const char *hardError=nullptr;
 SoftTimer errorTimer(100);
 //SoftTimer timer(100);
-EspBus espBus(5,4);
+auto espBus=std::make_shared<EspBus>(5,4);
+auto dev=std::make_shared<Device>(espBus);
 Blinker blink; //(8,100);
-Device dev(espBus);
 int gpioPins[8]={0,1,3,6,7,10,20,21};
 
 #ifdef SETTINGS_FROM_NVS
@@ -35,16 +35,16 @@ void setup() {
     }
 
     blink.setPin(prefs.getUChar("statusLedPin"));
-    dev.setNodeId(prefs.getUChar("deviceId"));
+    dev->setNodeId(prefs.getUChar("deviceId"));
 #else
     blink.setPin(8);
-    dev.setNodeId(5);
+    dev->setNodeId(5);
 #endif
 
     for (int i=0; i<7; i++) {
-        dev.insert(0x6001,i+1); // input
-        dev.insert(0x6201,i+1); // output
-        dev.insert(0x2001,i+1); // mode
+        dev->insert(0x6001,i+1); // input
+        dev->insert(0x6201,i+1); // output
+        dev->insert(0x2001,i+1); // mode
     }
 }
 
@@ -58,25 +58,25 @@ void loop() {
         return;
     }
 
-    espBus.loop();
+    espBus->loop();
 
     for (int i=0; i<7; i++) {
         int mode=INPUT;
-        switch (dev.at(0x2001,i+1).get<int>()) {
+        switch (dev->at(0x2001,i+1)->getInt()) {
             case 1: mode=OUTPUT; break;
             case 2: mode=INPUT_PULLUP; break;
             case 3: mode=INPUT_PULLDOWN; break;
         }
 
         pinMode(gpioPins[i],mode);
-        digitalWrite(gpioPins[i],dev.at(0x6201,i+1).get<int>());
-        dev.at(0x6001,i+1).set(digitalRead(gpioPins[i]));
+        digitalWrite(gpioPins[i],dev->at(0x6201,i+1)->getInt());
+        dev->at(0x6001,i+1)->setInt(digitalRead(gpioPins[i]));
     }
 
-    if (!espBus.isConnected())
+    if (!espBus->isConnected())
         blink.setPattern("xxxxxxxxx ");
 
-    else if (dev.getState()!=Device::OPERATIONAL)
+    else if (dev->getState()!=Device::OPERATIONAL)
         blink.setPattern("x         ");
 
     else
