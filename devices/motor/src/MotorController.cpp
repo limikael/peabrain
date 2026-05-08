@@ -39,7 +39,7 @@ void IRAM_ATTR onTimer() {
     }
 }
 
-MotorController::MotorController(Device& dev)
+MotorController::MotorController(std::shared_ptr<canopener::Device> dev)
 		: device(dev), plannerTimer(5), debugTimer(250), idleTimer(1000) {
 	pulPin=-1;
 	dirPin=-1;
@@ -59,13 +59,13 @@ MotorController::MotorController(Device& dev)
 void MotorController::begin() {
     instance=this;
 
-    device.insert(baseIndex+DOFFS_TARGET_POSITION,baseSubIndex).setType(Entry::INT32).set<int32_t>(0);
-	device.insert(baseIndex+DOFFS_PROFILE_MAX_VELOCITY,baseSubIndex).setType(Entry::INT32).set<int32_t>(1000);
-	device.insert(baseIndex+DOFFS_PROFILE_MAX_ACCEL,baseSubIndex).setType(Entry::INT32).set<int32_t>(1000);
-	device.insert(baseIndex+DOFFS_PROFILE_MAX_DECEL,baseSubIndex).setType(Entry::INT32).set<int32_t>(1000);
-	device.insert(baseIndex+DOFFS_CONTROL,baseSubIndex).setType(Entry::UINT16).set<uint16_t>(0); // 0
-	device.insert(baseIndex+DOFFS_POLARITY,baseSubIndex).setType(Entry::UINT8).set<uint8_t>(0);
-	device.insert(baseIndex+DOFFS_ACTUAL_POSITION,baseSubIndex).setType(Entry::INT32);
+    device->insert(baseIndex+DOFFS_TARGET_POSITION,baseSubIndex)->setType(Entry::INT32)->setInt(0);
+	device->insert(baseIndex+DOFFS_PROFILE_MAX_VELOCITY,baseSubIndex)->setType(Entry::INT32)->setInt(1000);
+	device->insert(baseIndex+DOFFS_PROFILE_MAX_ACCEL,baseSubIndex)->setType(Entry::INT32)->setInt(1000);
+	device->insert(baseIndex+DOFFS_PROFILE_MAX_DECEL,baseSubIndex)->setType(Entry::INT32)->setInt(1000);
+	device->insert(baseIndex+DOFFS_CONTROL,baseSubIndex)->setType(Entry::UINT16)->setInt(0); // 0
+	device->insert(baseIndex+DOFFS_POLARITY,baseSubIndex)->setType(Entry::UINT8)->setInt(0);
+	device->insert(baseIndex+DOFFS_ACTUAL_POSITION,baseSubIndex)->setType(Entry::INT32);
 
     pinMode(pulPin,OUTPUT);
     pinMode(dirPin,OUTPUT);
@@ -84,17 +84,17 @@ int roundAwayFromZero(float x) {
 }
 
 void MotorController::loop() {
-	uint16_t control=device.at(baseIndex+DOFFS_CONTROL,baseSubIndex).get<uint16_t>();
+	uint16_t control=device->at(baseIndex+DOFFS_CONTROL,baseSubIndex)->getUint();
 
     unsigned long deltaTime=plannerTimer.tick();
     if (deltaTime) {
-	    motion.target_pos=device.at(baseIndex+DOFFS_TARGET_POSITION,baseSubIndex).get<int32_t>();
-	    motion.max_vel=device.at(baseIndex+DOFFS_PROFILE_MAX_VELOCITY,baseSubIndex).get<int32_t>();
-	    motion.max_accel=device.at(baseIndex+DOFFS_PROFILE_MAX_ACCEL,baseSubIndex).get<int32_t>();
-	    motion.max_decel=device.at(baseIndex+DOFFS_PROFILE_MAX_DECEL,baseSubIndex).get<int32_t>();
+	    motion.target_pos=device->at(baseIndex+DOFFS_TARGET_POSITION,baseSubIndex)->getInt();
+	    motion.max_vel=device->at(baseIndex+DOFFS_PROFILE_MAX_VELOCITY,baseSubIndex)->getInt();
+	    motion.max_accel=device->at(baseIndex+DOFFS_PROFILE_MAX_ACCEL,baseSubIndex)->getInt();
+	    motion.max_decel=device->at(baseIndex+DOFFS_PROFILE_MAX_DECEL,baseSubIndex)->getInt();
 
 	    update_trapezoidal_motion(&motion,deltaTime/1000.0);
-	    device.at(baseIndex+DOFFS_ACTUAL_POSITION,baseSubIndex).set<int32_t>(motion.current_pos);
+	    device->at(baseIndex+DOFFS_ACTUAL_POSITION,baseSubIndex)->setInt(motion.current_pos);
 
 	    targetSteps=motion.current_pos;
         actualStepsMillisPerTick=roundAwayFromZero(motion.current_vel * (1000.0 / 20000));

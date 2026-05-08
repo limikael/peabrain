@@ -22,7 +22,7 @@ devices.gpio.mode_1=1;
 devices.gpio.mode_2=1;
 await devices.gpio.flush();
 
-devices.motor=openDevice(32,MOTOR_PROFILE);
+devices.motor=openDevice(60,MOTOR_PROFILE);
 await devices.motor.awaitState("operational");
 devices.motor.polarity=7;
 devices.motor.maxAcceleration=10000;

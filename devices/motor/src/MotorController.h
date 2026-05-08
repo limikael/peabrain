@@ -6,7 +6,7 @@
 
 class MotorController {
 public:
-	MotorController(canopener::Device& device);
+	MotorController(std::shared_ptr<canopener::Device> device_);
 	void begin();
 	void setPulPin(int pulPin_) { pulPin=pulPin_; }
 	void setDirPin(int dirPin_) { dirPin=dirPin_; }
@@ -23,7 +23,7 @@ private:
 	volatile int pulPin,dirPin,enaPin;
 	//volatile bool activeStep;
 	trapezoidal_motion_t motion;
-	canopener::Device& device;
+	std::shared_ptr<canopener::Device> device;
 	uint16_t baseIndex;
 	uint8_t baseSubIndex;
 	SoftTimer plannerTimer,debugTimer;
