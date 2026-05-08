@@ -12,8 +12,7 @@
   "packages": "packages",
   "exports": {
     ".": {
-      "node": "./js/exports/exports-node.js",
-      "mcu": "./js/exports/exports.js"
+      "mcu": "./js/exports/exports-mcu.js"
     },
     "./peakernel-project-hooks": "./js/tools/peabrain-commands.js"
   },

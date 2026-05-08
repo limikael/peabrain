@@ -1,4 +1,6 @@
 import {renderController, Menu, MenuItem} from "peabrain-ui";
+import {openDevice} from "canopener";
+import {GPIO_PROFILE} from "peabrain";
 
 function App() {
 	return (
@@ -15,17 +17,14 @@ function App() {
 	);
 };
 
-let m=getMasterDevice();
-let d=m.createRemoteDevice(5);
+let d=openDevice(5,GPIO_PROFILE);
 await d.awaitState("operational");
 
-d.insert(0x2001,1);
-d.insert(0x6201,1);
-d.at(0x2001,1).setInt(1);
+d.at("mode_1").setInt(1);
 await d.flush();
 
 setInterval(()=>{
-	d.at(0x6201,1).setInt(!d.at(0x6201,1).getInt());
+	d.output_1=!d.output_1;
 },1000);
 
 renderController(<App/>);
