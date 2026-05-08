@@ -1,7 +1,21 @@
-import {useRef, useState, createContext, useContext} from "./reactive-tui.js";
+import {useRef, useState, createContext, useContext, useRefresh, useEffect} from "./reactive-tui.js";
 import {useClampedEncoder, useEncoderButton} from "./device-ui.js";
 
 let BackContext=createContext();
+
+export function useEventUpdate(obj, event="change") {
+	let refresh=useRefresh();
+	useEffect(()=>{
+		function handleChange() {
+			refresh();
+		}
+
+		obj.on(event,handleChange);
+		return ()=>{
+			obj.off(event,handleChange);
+		}
+	});
+}
 
 export function List({title, items, onSelect}) {
 	let encoder=useClampedEncoder(0,items.length);
