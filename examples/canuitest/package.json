@@ -1,0 +1,11 @@
+{
+  "name": "canuitest",
+  "type": "module",
+  "scripts": {
+    "flash": "peabrain flash",
+    "deploy": "peabrain deploy"
+  },
+  "dependencies": {
+    "peabrain": "^1.0.0"
+  }
+}

@@ -25,8 +25,8 @@
   "license": "ISC",
   "packageManager": "pnpm@10.12.1",
   "dependencies": {
+    "canopener": "^1.0.0",
     "commander": "^14.0.3",
-    "peakernel": "^1.0.0",
-    "canopener": "^1.0.0"
+    "peakernel": "^1.0.0"
   }
 }
