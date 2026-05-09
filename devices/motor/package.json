@@ -2,7 +2,6 @@
   "name": "peabrain-motor",
   "private": "true",
   "scripts": {
-    "nvs": "flashnvs --port=/dev/ttyESP-50:78:7D:91:F2:1C -fnvs.json",
     "flash": "pio run --target=upload"
   }
 }

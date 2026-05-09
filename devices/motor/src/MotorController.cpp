@@ -19,18 +19,20 @@ void IRAM_ATTR onTimer() {
         return;
     }
 
+    int positiveDirPin=HIGH; //LOW;
+
     instance->actualStepsMillis+=instance->actualStepsMillisPerTick;
     if (instance->actualStepsMillis<0) {
         instance->actualStepsMillis+=1000;
         instance->actualSteps--;
-        digitalWrite(instance->dirPin, HIGH);
+        digitalWrite(instance->dirPin, !positiveDirPin);
         digitalWrite(instance->pulPin, HIGH);
     }
 
     else if (instance->actualStepsMillis>1000) {
         instance->actualStepsMillis-=1000;
         instance->actualSteps++;
-        digitalWrite(instance->dirPin, LOW);
+        digitalWrite(instance->dirPin, positiveDirPin);
         digitalWrite(instance->pulPin, HIGH);
     }
 

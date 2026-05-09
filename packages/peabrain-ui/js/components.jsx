@@ -56,8 +56,19 @@ export function MenuItem({children}) {
 }
 
 export function Menu({title, children}) {
+	function arrayify(a) {
+	    if (!a)
+	        a=[];
+
+	    if (!Array.isArray(a))
+	        a=[a];
+
+	    return a;
+	}
+
 	let [selectedIndex,setSelectedIndex]=useState();
 	let back=useContext(BackContext);
+	children=arrayify(children);
 
 	if (selectedIndex!==undefined) {
 		function handleBack() {
