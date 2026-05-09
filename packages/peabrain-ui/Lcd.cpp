@@ -15,6 +15,8 @@ void Lcd::reset() {
 	buffer.assign(80,' ');
 	scanX=0;
 	scanY=0;
+	cursorX=-1;
+	cursorY=-1;
 }
 
 void Lcd::setBuffer(std::string s) {
@@ -28,8 +30,14 @@ void Lcd::loop() {
 	int index=scanX+scanY*20;
 	if (written[index]!=buffer[index]) {
 		written[index]=buffer[index];
-		lcd.setCursor(scanX,scanY);
+		if (scanX!=cursorX || scanY!=cursorY) {
+			lcd.setCursor(scanX,scanY);
+			cursorX=scanX;
+			cursorY=scanY;
+		}
+
 		lcd.print(written[index]);
+		cursorX++;
 	}
 
 	scanX++;

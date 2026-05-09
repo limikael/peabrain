@@ -12,7 +12,7 @@ public:
 	void loop();
 
 private:
-	int scanX,scanY;
+	int scanX,scanY,cursorX,cursorY;
 	std::string buffer,written;
 	LiquidCrystal_I2C lcd;
 };
