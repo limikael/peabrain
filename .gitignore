@@ -10,3 +10,6 @@ bin
 uv.lock
 .python-version
 pnpm-workspace.yaml
+*.lck
+pcb/**/*.zip
+fp-info-cache
