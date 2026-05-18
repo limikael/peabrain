@@ -6,7 +6,8 @@
   "scripts": {
     "flash": "peabrain flash",
     "pcb:motor": "kisch pcb/motor/motor.kicad_sch -s pcb/motor/motor.js -L /home/micke/Repo.ext/kicad-symbols/",
-    "pcb:liu": "kisch pcb/liu/liu.kicad_sch -s pcb/liu/liu.js -L /home/micke/Repo.ext/kicad-symbols/"
+    "pcb:liu": "kisch pcb/liu/liu.kicad_sch -s pcb/liu/liu.js -L /home/micke/Repo.ext/kicad-symbols/",
+    "pcb:tpl": "kisch pcb/tpl/tpl.kicad_sch -s pcb/tpl/tpl.js -L /home/micke/Repo.ext/kicad-symbols/"
   },
   "bin": {
     "peabrain": "js/tools/peabrain-cli.js"
