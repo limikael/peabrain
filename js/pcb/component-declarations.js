@@ -65,6 +65,24 @@ export function declareMalePinHeader(sch, ref, pins) {
             });
             break;
 
+        case 4:
+            return sch.declare(ref,{
+                symbol: "Connector_Generic:Conn_01x04",
+                footprint: "Connector_PinSocket_2.54mm:PinSocket_1x04_P2.54mm_Vertical",
+                lcsc: "C32713270",
+                lcscRot: 90
+            });
+
+        case 5:
+            return sch.declare(ref,{
+                symbol: "Connector_Generic:Conn_01x05",
+                footprint: "Connector_PinSocket_2.54mm:PinSocket_1x05_P2.54mm_Vertical",
+                lcsc: "C32713271",
+                lcscRot: 90
+            });
+
+
+
         default:
             throw new Error("can't hanlde pins");
     }

@@ -4,15 +4,17 @@ import {declareResistor, declarePinHeader, declareEsp32,
 		declareDiode} from "../../js/pcb/component-declarations.js";
 
 export default async function(sch, {variant}) {
-	let screw1 = declareScrewTerminal(sch,"J1");
-	let screw2 = declareScrewTerminal(sch,"J2");
-	let esp32 = declareEsp32(sch,"U1","U2");
-	let tja1050 = declareTja1050(sch,"U3","U4");
-	let mp1584 = declareMp1584(sch,"U5","U6","U7","U8");
+	let screw1=declareScrewTerminal(sch,"J1");
+	let screw2=declareScrewTerminal(sch,"J2");
+	let esp32=declareEsp32(sch,"U1","U2");
+	let tja1050=declareTja1050(sch,"U3","U4");
+	let mp1584=declareMp1584(sch,"U5","U6","U7","U8");
 	let d1=declareDiode(sch,"D1","ss14");
-	let r1 = declareResistor(sch,"R1",4700);
-	let j5=declareMalePinHeader(sch,"J5",2);
+	let r1=declareResistor(sch,"R1",4700);
+	let j5=declareMalePinHeader(sch,"J5",2); // LED
 	let r4=declareResistor(sch,"R4",330);
+	let j6=declareMalePinHeader(sch,"J6",4); // I2C
+	let j7=declareMalePinHeader(sch,"J7",5); // Encoder knob
 
 	// power
 	mp1584.vin.connect("12V");
@@ -37,7 +39,20 @@ export default async function(sch, {variant}) {
 	j5.pin(1).connect("3V3");
 	r4.connect(esp32.gpio8,j5.pin(2));
 
-	// screw
+	// screw terminals
 	screw1.connect("GND","12V","CANH","CANL");
 	screw2.connect("GND","12V","CANH","CANL");
+
+	// I2C display
+	j6.pin(1).connect("GND");
+	j6.pin(2).connect("3V3");
+	j6.pin(3).connect(esp32.gpio7); // slc
+	j6.pin(4).connect(esp32.gpio6); // sda
+
+	// Encoder knob
+	j7.pin(1).connect("GND");
+	j7.pin(2).connect("3V3");
+	j7.pin(3).connect(esp32.gpio10); // sw
+	j7.pin(4).connect(esp32.gpio20); // dt
+	j7.pin(5).connect(esp32.gpio21); // clk
 }
