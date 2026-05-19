@@ -1,6 +1,37 @@
+export function declareTransistor(sch, ref, type) {
+    switch (type) {
+        case "MMBT2222A":
+            let t=sch.declare(ref,{
+                symbol: "Transistor_BJT:Q_NPN_BEC", //" MMBT2222A",
+                footprint: "Package_TO_SOT_SMD:SOT-23", // check this...
+                lcsc: "C8512"
+            });
+
+            return compoundSymbol(t).namePins(["base","emitter","collector"]);
+            break;
+
+        default:
+            throw new Error("Unknown transistor type: "+type);
+            break;
+    }
+}
+
+export function declareRelay(sch, ref) {
+    let relay=sch.declare(ref,{
+        symbol: "Relay:SANYOU_SRD_Form_C",
+        footprint: "Relay_THT:Relay_SPDT_SANYOU_SRD_Series_Form_C",
+        lcsc: "C35449"
+    });
+
+    relay=compoundSymbol(relay).namePins(["com","a1","no","nc","a2"]);
+
+    return relay;
+}
+
 export function declareResistor(sch, ref, ohm) {
     let partsByOhm={
         330: "C23138",
+        1000: "C21190",
         4700: "C23162"
     };
 
@@ -21,6 +52,14 @@ export function declareDiode(sch, ref, type) {
                 symbol: "Device:D",
                 footprint: "Diode_SMD:D_SMA",
                 lcsc: "C2480"
+            });
+            break;
+
+        case "1n4148w":
+            return sch.declare(ref,{
+                symbol: "Device:D",
+                footprint: "Diode_SMD:D_SMA",
+                lcsc: "C2099"
             });
             break;
 
