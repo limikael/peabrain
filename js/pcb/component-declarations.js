@@ -58,7 +58,7 @@ export function declareDiode(sch, ref, type) {
         case "1n4148w":
             return sch.declare(ref,{
                 symbol: "Device:D",
-                footprint: "Diode_SMD:D_SMA",
+                footprint: "Diode_SMD:D_SOD-123",
                 lcsc: "C2099"
             });
             break;
