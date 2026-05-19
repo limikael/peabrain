@@ -4,7 +4,8 @@ export function declareTransistor(sch, ref, type) {
             let t=sch.declare(ref,{
                 symbol: "Transistor_BJT:Q_NPN_BEC", //" MMBT2222A",
                 footprint: "Package_TO_SOT_SMD:SOT-23", // check this...
-                lcsc: "C8512"
+                lcsc: "C8512",
+                lcscRot: 180
             });
 
             return compoundSymbol(t).namePins(["base","emitter","collector"]);

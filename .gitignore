@@ -13,3 +13,5 @@ pnpm-workspace.yaml
 *.lck
 pcb/**/*.zip
 fp-info-cache
+.jlcc
+jlcpcb
