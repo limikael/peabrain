@@ -3400,6 +3400,11 @@
         )
       )
     )
+    (property "lcscRot" "180"
+      (effects
+        (hide yes)
+      )
+    )
   )
   (symbol
     (lib_id "Device:R")
@@ -4653,6 +4658,11 @@
         )
       )
     )
+    (property "lcscRot" "180"
+      (effects
+        (hide yes)
+      )
+    )
   )
   (symbol
     (lib_id "Transistor_BJT:Q_NPN_BEC")
@@ -4728,6 +4738,11 @@
           (reference "Q1")
           (unit 1)
         )
+      )
+    )
+    (property "lcscRot" "180"
+      (effects
+        (hide yes)
       )
     )
   )
@@ -4880,6 +4895,11 @@
           (reference "Q4")
           (unit 1)
         )
+      )
+    )
+    (property "lcscRot" "180"
+      (effects
+        (hide yes)
       )
     )
   )
