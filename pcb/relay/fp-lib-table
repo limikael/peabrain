@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "Peabrain")(type "KiCad")(uri "${KIPRJMOD}/../Peabrain.pretty")(options "")(descr ""))
+)

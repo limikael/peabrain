@@ -10,7 +10,7 @@
     "pcb:liu": "kisch pcb/liu/liu.kicad_sch -s pcb/liu/liu.js -L /home/micke/Repo.ext/kicad-symbols/",
     "pcb:gpio": "kisch pcb/gpio/gpio.kicad_sch -s pcb/gpio/gpio.js -L /home/micke/Repo.ext/kicad-symbols/",
     "pcb:relay": "kisch pcb/relay/relay.kicad_sch -s pcb/relay/relay.js -L /home/micke/Repo.ext/kicad-symbols/",
-    "jlcpcb:relay": "jlcc pcb/relay/relay.kicad_pcb -o pcb/relay/jlcpcb -F pcb -F /home/micke/Repo.ext/kicad-footprints/"
+    "jlcpcb:relay": "jlcc pcb/relay/relay.kicad_pcb -o pcb/relay/jlcpcb -F /home/micke/Repo.ext/kicad-footprints/"
   },
   "bin": {
     "peabrain": "js/tools/peabrain-cli.js"
