@@ -1,0 +1,192 @@
+import {declareResistor, declarePinHeader, declareEsp32,
+		declareTja1050, declareScrewTerminal, declareDrv8825,
+		declareMp1584, declareCapacitor, declareMalePinHeader,
+		declareDiode} from "../../js/pcb/component-declarations.js";
+
+/*
+research:
+
+DPAK - TO-252
+
+D2PAK - TO-263
+
+
+IRFS7440 - USD 0.28 - 7203
+PSMN1R1-40BS - USD 1.14 - 10
+IPB100N04S4 - USD 3.35 - 5
+
+
+gate driver: IR2104
+mosfet: IRFS7440
+*/
+
+// WIP WIP
+function declarePullup(sch, ref, value="10k") {
+  return sch.declare(ref, {
+    symbol: "Device:R",
+    footprint: "Resistor_SMD:R_0603_1608Metric",
+    lcsc: "C21190" // 10k common
+  });
+}
+
+function declareLMV331(sch, ref) {
+  return sch.declare(ref, {
+    symbol: "Comparator:LMV331",
+    footprint: "Package_SO:SOIC-5", // or SOT-23-5 if you prefer compact
+    lcsc: "C7950" // LMV331 common LCSC family (adjust if needed)
+  });
+}
+
+function declareIR2104(sch, ref) {
+  return sch.declare(ref, {
+    symbol: "Driver_IR2104",   // adjust to your KiCad lib name
+    footprint: "Package_SO:SOIC-8",
+    //lcsc: "C9694"
+  });
+}
+
+function declareMosfetD2PAK(sch, ref) {
+  return sch.declare(ref, {
+    symbol: "Device:Q_NMOS_GDS",
+    footprint: "Package_TO_SOT_THT:TO-263-2",
+    //lcsc: "IRFS7440" // placeholder, replace with real LCSC if needed
+  });
+}
+
+function declareHalfBridgeWithCurrentLimit(sch, prefix, vrefNet, phaseOutNet) {
+
+  // =========================
+  // DRIVER + MOSFETS
+  // =========================
+  let u = declareIR2104(sch, `U_${prefix}`);
+
+  let qH = declareMosfetD2PAK(sch, `QH_${prefix}`);
+  let qL = declareMosfetD2PAK(sch, `QL_${prefix}`);
+
+  let rGH = declareResistor(sch, `RGH_${prefix}`, 10);
+  let rGL = declareResistor(sch, `RGL_${prefix}`, 10);
+
+  // =========================
+  // CURRENT SENSE
+  // =========================
+  let rSense = declareResistor(sch, `RS_${prefix}`, 0.01); // 10mΩ
+
+  let vsense = sch.declare(`VSENSE_${prefix}`, { symbol: "NetPort" });
+  vsense.connect(rSense);
+
+  // filter (important for LMV331 stability)
+  let rFilter = declareResistor(sch, `RF_${prefix}`, 220);
+  let cFilter = declareCapacitor(sch, `CF_${prefix}`, "100n");
+
+  let vsenseFilt = sch.declare(`VSF_${prefix}`, { symbol: "NetPort" });
+
+  rFilter.connect(vsense, vsenseFilt);
+  cFilter.connect(vsenseFilt, "GND");
+
+  // =========================
+  // COMPARATOR (LMV331)
+  // =========================
+  let cmp = declareLMV331(sch, `CMP_${prefix}`);
+
+  let pullup = declarePullup(sch, `RPU_${prefix}`, "10k");
+
+  let ilim = sch.declare(`ILIM_${prefix}`, { symbol: "NetPort" });
+
+  cmp.VCC.connect("3V3");
+  cmp.GND.connect("GND");
+
+  // + input = Vref from MCU
+  cmp.INP.connect(vrefNet);
+
+  // - input = measured current
+  cmp.INN.connect(vsenseFilt);
+
+  // open collector output → pull-up
+  cmp.OUT.connect(ilim);
+  pullup.connect(ilim, "3V3");
+
+  // =========================
+  // IR2104 DRIVER
+  // =========================
+  u.VCC.connect("12V");
+  u.COM.connect("GND");
+
+  let mid = phaseOutNet;
+  u.VS.connect(mid);
+
+  // shutdown control (IMPORTANT)
+  u.SD.connect(ilim);
+
+  // =========================
+  // MOSFET STAGE
+  // =========================
+  qH.drain.connect("12V");
+  qH.source.connect(mid);
+  qH.gate.connect(rGH);
+  rGH.connect(u.HO);
+
+  qL.drain.connect(mid);
+  qL.source.connect(rSense);
+  qL.gate.connect(rGL);
+  rGL.connect(u.LO);
+
+  rSense.connect("GND");
+
+  // =========================
+  // BOOTSTRAP (still required)
+  // =========================
+  let cBoot = declareCapacitor(sch, `CB_${prefix}`, "100n");
+  let dBoot = declareDiode(sch, `DB_${prefix}`, "ss14");
+
+  dBoot.connect("12V", u.VB);
+  cBoot.connect(u.VB, mid);
+
+  return {
+    driver: u,
+    comparator: cmp,
+    sense: rSense,
+    limit: ilim
+  };
+}
+
+export default async function(sch, {variant}) {
+	let screw1=declareScrewTerminal(sch,"J1");
+	let screw2=declareScrewTerminal(sch,"J2");
+	let screw3=declareScrewTerminal(sch,"J3");
+	let screw4=declareScrewTerminal(sch,"J4");
+	let esp32=declareEsp32(sch,"U1","U2");
+	let tja1050=declareTja1050(sch,"U3","U4");
+	let mp1584=declareMp1584(sch,"U5","U6","U7","U8");
+	let r1=declareResistor(sch,"R1",4700);
+	let j5=declareMalePinHeader(sch,"J5",2);
+	let r4=declareResistor(sch,"R4",330);
+	let d1=declareDiode(sch,"D1","ss14");
+
+	// Status LED
+	j5.pin(1).connect("3V3");
+	r4.connect(esp32.gpio8,j5.pin(2));
+
+	// MCU
+	esp32._5v.connect("5V");
+	esp32._3v3.connect("3V3");
+	esp32.gnd.connect("GND");
+
+	// CAN
+	tja1050.vcc.connect("5V");
+	tja1050.tx.connect(esp32.gpio5);
+	r1.connect(tja1050.rx,esp32.gpio4);
+	tja1050.gnd.connect("GND");
+	tja1050.canl.connect("CANL");
+	tja1050.canh.connect("CANH");
+
+	// Power
+	mp1584.vin.connect("12V");
+	mp1584.gndin.connect("GND");
+	mp1584.gndout.connect("GND");
+	d1.connect("5V",mp1584.vout);
+
+	// Screw terminals
+	screw1.connect("GND","12V","CANH","CANL");
+
+
+}

@@ -31,6 +31,8 @@ export function declareRelay(sch, ref) {
 
 export function declareResistor(sch, ref, ohm) {
     let partsByOhm={
+        0.1: "C25334",
+        10: "C174147",
         330: "C23138",
         1000: "C21190",
         4700: "C23162"

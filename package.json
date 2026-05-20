@@ -10,6 +10,7 @@
     "pcb:liu": "kisch pcb/liu/liu.kicad_sch -s pcb/liu/liu.js -L /home/micke/Repo.ext/kicad-symbols/",
     "pcb:gpio": "kisch pcb/gpio/gpio.kicad_sch -s pcb/gpio/gpio.js -L /home/micke/Repo.ext/kicad-symbols/",
     "pcb:relay": "kisch pcb/relay/relay.kicad_sch -s pcb/relay/relay.js -L /home/micke/Repo.ext/kicad-symbols/",
+    "pcb:discrete-motor": "kisch pcb/discrete-motor/discrete-motor.kicad_sch -s pcb/discrete-motor/discrete-motor.js -L /home/micke/Repo.ext/kicad-symbols/",
     "fab:relay": "kicad-fab-export pcb/relay/relay.kicad_pcb -o pcb/relay/jlcpcb -F /home/micke/Repo.ext/kicad-footprints/"
   },
   "bin": {
