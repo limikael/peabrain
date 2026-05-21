@@ -33,19 +33,24 @@ export function declareRelay(sch, ref) {
 
 export function declareResistor(sch, ref, ohm) {
     let partsByOhm={
-        0.1: "C25334",
+        0.01: "C104920", // 1206
+        0.1: "C25334", // 1206
         10: "C174147",
         330: "C23138",
         1000: "C21190",
         4700: "C23162"
     };
 
+    let footprint="Resistor_SMD:R_0603_1608Metric";
+    if (ohm==0.01 || ohm==0.1)
+        footprint="Resistor_SMD:R_1206_3216Metric";
+
     if (!partsByOhm[ohm])
         throw new Error("not found!");
 
     return sch.declare(ref,{
         symbol: "Device:R",
-        footprint: "Resistor_SMD:R_0603_1608Metric",
+        footprint: footprint,
         lcsc: partsByOhm[ohm],
         value: valueStringify(ohm),
     });
@@ -88,14 +93,16 @@ export function declareCapacitor(sch, ref, farad) {
         return sch.declare(ref,{
             symbol: "Device:C",
             footprint: "Capacitor_SMD:C_1206_3216Metric",
-            lcsc: partsByFarad[farad]
+            lcsc: partsByFarad[farad],
+            value: farad
         });
     }
 
     return sch.declare(ref,{
         symbol: "Device:C",
         footprint: "Capacitor_SMD:C_0603_1608Metric",
-        lcsc: partsByFarad[farad]
+        lcsc: partsByFarad[farad],
+        value: farad
     });
 }
 

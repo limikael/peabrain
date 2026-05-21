@@ -1,0 +1,4 @@
+- INA181 20V/V: C2058943
+- 0.01 ohm shunt
+- 1000 ohm (RC r)
+- 100 nF (RC c)

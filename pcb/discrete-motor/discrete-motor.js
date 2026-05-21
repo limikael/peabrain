@@ -20,17 +20,6 @@ gate driver: IR2104
 mosfet: IRFS7440
 */
 
-function declareLMV331(sch, ref) {
-    let c=sch.declare(ref, {
-        symbol: "Comparator:LMV331",
-        footprint: "Package_SO:SOIC-5", // or SOT-23-5 if you prefer compact
-        lcsc: "C7950" // LMV331 common LCSC family (adjust if needed)
-    });
-
-    //return compoundSymbol(c).namePins(["out","gnd","inPlus","inMinus","vcc"]);
-    return compoundSymbol(c).namePins(["inPlus","gnd","inMinus","out","vcc"]);
-}
-
 function declareIR2104(sch, ref) {
     let c=sch.declare(ref, {
         symbol: "Driver_FET:IR2104",   // adjust to your KiCad lib name
@@ -44,42 +33,21 @@ function declareIR2104(sch, ref) {
 function declareMosfetD2PAK(sch, ref) {
     let c=sch.declare(ref, {
         symbol: "Transistor_FET:Q_NMOS_GDS",
-        footprint: "Package_TO_SOT_THT:TO-263-2",
+        footprint: "fixme!!!",
         //lcsc: "IRFS7440" // placeholder, replace with real LCSC if needed
     });
 
     return compoundSymbol(c).namePins(["gate","drain","source"]);
 }
 
-export function declareCurrentLimiter(sch, postfix) {
-    let comp=declareLMV331(sch,"UCL"+postfix);
+function delcareINA181(sch, ref) {
+    let c=sch.declare(ref, {
+        symbol: "Amplifier_Current:INA181",
+        footprint: "Package_TO_SOT_SMD:SOT-23-6",
+        lcsc: "C2058943"
+    });
 
-    // low pass filter
-    let rFilter=declareResistor(sch,"RCLF"+postfix,4700);
-    let cFilter=declareCapacitor(sch,"CCLF"+postfix,"100n");
-    let vrefNode=rFilter.pin(1);
-    rFilter.pin(2).connect(comp.inMinus);
-    cFilter.connect(comp.inMinus,"GND");
-
-    // current sense
-    let rSense=declareResistor(sch,"RCLS"+postfix,0.1);
-    let loadNode=rSense.pin(1);
-    rSense.pin(2).connect("GND");
-    comp.inPlus.connect(loadNode);
-
-    // comparator pull up
-    let rPullup=declareResistor(sch,"RCLP"+postfix,4700);
-    rPullup.connect("3V3",comp.out);
-
-    // power
-    comp.vcc.connect("3V3");
-    comp.gnd.connect("GND");
-
-    return {
-        vref: vrefNode,
-        shutdown: comp.out,
-        load: loadNode
-    };
+    return compoundSymbol(c).namePins(["out","gnd","inPlus","inMinus","vs","ref"]);
 }
 
 export function declareHalfBridge(sch, postfix) {
@@ -112,7 +80,35 @@ export function declareHalfBridge(sch, postfix) {
     return ({
         shutdown: driver.shutdown,
         in: driver.in,
-        return: ql.source
+        return: ql.source,
+        out: driver.vs
+    });
+}
+
+function declareHalfBridgeStage(sch, refPostfix) {
+    let h=declareHalfBridge(sch,refPostfix);
+    let rsense=declareResistor(sch,"R"+refPostfix,0.01);
+    rsense.connect(h.return,"GND");
+    let amp=delcareINA181(sch,"UA"+refPostfix);
+    amp.gnd.connect("GND");
+    amp.ref.connect("GND");
+    amp.vs.connect("3V3");
+    rsense.connect(amp.inPlus,amp.inMinus);
+
+    let csense=declareCapacitor(sch,"CSA"+refPostfix,"100n");
+    csense.connect(amp.vs,amp.gnd);
+
+    let rfilter=declareResistor(sch,"RF"+refPostfix,1000);
+    let cfilter=declareCapacitor(sch,"CF"+refPostfix,"100n");
+
+    amp.out.connect(rfilter.pin(1));
+    cfilter.connect(rfilter.pin(2),"GND");
+
+    return ({
+        in: h.in,
+        shutdown: h.shutdown,
+        senseOut: rfilter.pin(2),
+        out: h.out
     });
 }
 
@@ -156,11 +152,9 @@ export default async function(sch, {variant}) {
     screw1.connect("GND","12V","CANH","CANL");
 
     // business
-    let cur1=declareCurrentLimiter(sch,"CUR1");
-    cur1.vref.connect(esp32.gpio20);
-
-    let h1=declareHalfBridge(sch,"10");
-    cur1.shutdown.connect(h1.shutdown);
-    esp32.gpio0.connect(h1.in);
-    h1.return.connect(cur1.load);
+    let h1=declareHalfBridgeStage(sch,"10");
+    h1.in.connect(esp32.gpio0);
+    h1.senseOut.connect(esp32.gpio1);
+    h1.shutdown.connect(esp32.gpio20);
+    h1.out.connect(screw4.pin(1));
 }
