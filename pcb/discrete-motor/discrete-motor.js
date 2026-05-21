@@ -155,6 +155,12 @@ export default async function(sch, {variant}) {
     let h1=declareHalfBridgeStage(sch,"10");
     h1.in.connect(esp32.gpio0);
     h1.senseOut.connect(esp32.gpio1);
-    h1.shutdown.connect(esp32.gpio20);
+    h1.shutdown.connect(esp32.gpio21);
     h1.out.connect(screw4.pin(1));
+
+    /*let h2=declareHalfBridgeStage(sch,"11");
+    h2.in.connect(esp32.gpio2);
+    h2.senseOut.connect(esp32.gpio3);
+    h2.shutdown.connect(esp32.gpio21);
+    h2.out.connect(screw4.pin(2));*/
 }
