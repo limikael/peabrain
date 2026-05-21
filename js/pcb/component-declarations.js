@@ -1,3 +1,5 @@
+import {valueStringify} from "kisch";
+
 export function declareTransistor(sch, ref, type) {
     switch (type) {
         case "MMBT2222A":
@@ -44,7 +46,8 @@ export function declareResistor(sch, ref, ohm) {
     return sch.declare(ref,{
         symbol: "Device:R",
         footprint: "Resistor_SMD:R_0603_1608Metric",
-        lcsc: partsByOhm[ohm]
+        lcsc: partsByOhm[ohm],
+        value: valueStringify(ohm),
     });
 }
 

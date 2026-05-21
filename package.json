@@ -34,5 +34,8 @@
     "canopener": "^1.0.0",
     "commander": "^14.0.3",
     "peakernel": "^1.0.0"
+  },
+  "devDependencies": {
+    "kisch": "^1.0.5"
   }
 }

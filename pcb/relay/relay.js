@@ -28,6 +28,7 @@ export default async function(sch, {variant}) {
 	let tja1050=declareTja1050(sch,"U3","U4");
 	let mp1584=declareMp1584(sch,"U5","U6","U7","U8");
 	let r1=declareResistor(sch,"R1",4700);
+
 	let j5=declareMalePinHeader(sch,"J5",2);
 	let r4=declareResistor(sch,"R4",330);
 	let d1=declareDiode(sch,"D1","ss14");

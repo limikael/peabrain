@@ -123,8 +123,8 @@
       "lockedItems": false,
       "otherItems": false,
       "pins": false,
-      "symbols": true,
-      "text": false,
+      "symbols": false,
+      "text": true,
       "wires": false
     }
   }

@@ -15,3 +15,5 @@ pcb/**/*.zip
 fp-info-cache
 .jlcc
 jlcpcb
+*auto_saved_files#
+_autosave-*
