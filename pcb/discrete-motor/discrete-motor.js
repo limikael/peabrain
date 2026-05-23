@@ -23,18 +23,19 @@ mosfet: IRFS7440
 function declareIR2104(sch, ref) {
     let c=sch.declare(ref, {
         symbol: "Driver_FET:IR2104",   // adjust to your KiCad lib name
-        footprint: "Package_SO:SOIC-8",
-        //lcsc: "C9694"
+        footprint: "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm",
+        lcsc: "C5804631"
     });
 
     return compoundSymbol(c).namePins(["vcc","in","shutdown","com","lo","vs","ho","vb"]);
 }
 
+// IRFS7440
 function declareMosfetD2PAK(sch, ref) {
     let c=sch.declare(ref, {
         symbol: "Transistor_FET:Q_NMOS_GDS",
-        footprint: "fixme!!!",
-        //lcsc: "IRFS7440" // placeholder, replace with real LCSC if needed
+        footprint: "Package_TO_SOT_SMD:TO-263-2",
+        lcsc: "C409762"
     });
 
     return compoundSymbol(c).namePins(["gate","drain","source"]);
@@ -85,14 +86,14 @@ export function declareHalfBridge(sch, postfix) {
     });
 }
 
-function declareHalfBridgeStage(sch, refPostfix) {
-    let h=declareHalfBridge(sch,refPostfix);
-    let rsense=declareResistor(sch,"R"+refPostfix,0.01);
-    rsense.connect(h.return,"GND");
+function declareCurrentSensor(sch, refPostfix) {
     let amp=delcareINA181(sch,"UA"+refPostfix);
     amp.gnd.connect("GND");
     amp.ref.connect("GND");
     amp.vs.connect("3V3");
+    amp.inMinus.connect("GND");
+
+    let rsense=declareResistor(sch,"RS"+refPostfix,0.01);
     rsense.connect(amp.inPlus,amp.inMinus);
 
     let csense=declareCapacitor(sch,"CSA"+refPostfix,"100n");
@@ -105,10 +106,8 @@ function declareHalfBridgeStage(sch, refPostfix) {
     cfilter.connect(rfilter.pin(2),"GND");
 
     return ({
-        in: h.in,
-        shutdown: h.shutdown,
-        senseOut: rfilter.pin(2),
-        out: h.out
+        in: amp.inPlus,
+        out: rfilter.pin(2)
     });
 }
 
@@ -151,16 +150,35 @@ export default async function(sch, {variant}) {
     // Screw terminals
     screw1.connect("GND","12V","CANH","CANL");
 
-    // business
-    let h1=declareHalfBridgeStage(sch,"10");
-    h1.in.connect(esp32.gpio0);
-    h1.senseOut.connect(esp32.gpio1);
-    h1.shutdown.connect(esp32.gpio21);
+    // h-bridges
+    let h1=declareHalfBridge(sch,"10");
+    h1.in.connect(esp32.gpio6);
     h1.out.connect(screw4.pin(1));
+    h1.shutdown.connect(esp32.gpio21);
 
-    /*let h2=declareHalfBridgeStage(sch,"11");
-    h2.in.connect(esp32.gpio2);
-    h2.senseOut.connect(esp32.gpio3);
+    let h2=declareHalfBridge(sch,"11");
+    h2.in.connect(esp32.gpio7);
+    h2.out.connect(screw4.pin(2));
     h2.shutdown.connect(esp32.gpio21);
-    h2.out.connect(screw4.pin(2));*/
+
+    let h3=declareHalfBridge(sch,"12");
+    h3.in.connect(esp32.gpio10);
+    h3.out.connect(screw4.pin(3));
+    h3.shutdown.connect(esp32.gpio21);
+
+    let h4=declareHalfBridge(sch,"13");
+    h4.in.connect(esp32.gpio20);
+    h4.out.connect(screw4.pin(4));
+    h4.shutdown.connect(esp32.gpio21);
+
+    // sensors
+    let s1=declareCurrentSensor(sch,"10");
+    h1.return.connect(s1.in);
+    h2.return.connect(s1.in);
+    s1.out.connect(esp32.gpio1);
+
+    let s2=declareCurrentSensor(sch,"11");
+    h3.return.connect(s2.in);
+    h4.return.connect(s2.in);
+    s2.out.connect(esp32.gpio3);
 }
