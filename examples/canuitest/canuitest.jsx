@@ -1,6 +1,6 @@
 import {GPIO_PROFILE, MOTOR_PROFILE, openDevice,
 		renderController, Menu, MenuItem, ObjectEditor,
-		useBack, useEncoderButton} from "peabrain";
+		useBack, useEncoderButton, useEventUpdate} from "peabrain";
 
 function InfoItem({label, value}) {
 	let back=useBack();
@@ -22,14 +22,29 @@ function Info() {
 	)
 }
 
+function CanDeviceList() {
+	useEventUpdate(getMasterDevice(),"devicesChanged");
+	let deviceIds=getMasterDevice().getConnectedDeviceIds();
+	return (
+		<Menu title="CAN Devices">
+			{deviceIds.map(id=>
+				<MenuItem title={"Device "+id}>
+					<InfoItem label={"Device "+id} value={"Connected"}/>
+				</MenuItem>
+			)}
+		</Menu>
+	)
+}
+
 function App({devices}) {
 	return (
 		<Menu title="Hello">
 			<MenuItem title="Info">
 				<Info/>
 			</MenuItem>
-			<Menu title="CAN Registers">
-			</Menu>
+			<MenuItem title="CAN Devices">
+				<CanDeviceList/>
+			</MenuItem>
 		</Menu>
 	);
 };
@@ -39,6 +54,6 @@ let devices={};
 
 renderController(<App devices={devices}/>);
 
-getBus().on("slcan",s=>{
+/*getBus().on("slcan",s=>{
 	console.log("msg: "+s);
-});
+});*/
