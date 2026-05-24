@@ -87,7 +87,16 @@ export class DeviceUi {
 		while (1) {
 			this.refreshPromise=new ResolvablePromise();
 			//console.log("render...");
-			this.refresh();
+			try {
+				this.refresh();
+			}
+
+			catch (e) {
+				this.setLines(["Render Error:",e.message]);
+				console.log("**** render error... ***");
+				console.log(e.message);
+			}
+
 			await this.refreshPromise;
 		}
 	}
@@ -97,9 +106,9 @@ export function renderController(element) {
 	//console.log("render controller!!!");
 
 	let deviceUi=new DeviceUi(element);
-	deviceUi.run().catch(e=>{
+	deviceUi.run();/*.catch(e=>{
 		console.log("**** uncaught in render loop ***");
 		console.log(e.message);
-	});
+	});*/
 	return deviceUi;
 }
