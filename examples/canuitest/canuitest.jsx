@@ -52,6 +52,13 @@ function App({devices}) {
 let m=getMasterDevice();
 let devices={};
 
+devices.gpio=openDevice(5,GPIO_PROFILE);
+//await devices.gpio.awaitState("operational");
+
+devices.gpio.mode_1=1;
+devices.gpio.mode_2=1;
+await devices.gpio.flush();
+
 renderController(<App devices={devices}/>);
 
 /*getBus().on("slcan",s=>{
