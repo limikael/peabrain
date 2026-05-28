@@ -61,6 +61,8 @@ await devices.gpio.flush();
 
 renderController(<App devices={devices}/>);
 
+//generateerror();
+
 /*getBus().on("slcan",s=>{
 	console.log("msg: "+s);
 });*/
