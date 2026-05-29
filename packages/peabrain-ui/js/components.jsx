@@ -115,3 +115,16 @@ export function Menu({title, children}) {
 export function useBack() {
 	return useContext(BackContext);
 }
+
+export function useIsBootComplete() {
+	useEventUpdate(Sys.getInstance(),"bootComplete");
+	return (Sys.getInstance().isBootComplete());
+}
+
+export function StatusCover({children}) {
+	let bootComplete=useIsBootComplete();
+	if (!bootComplete)
+		return ["Booting..."];
+
+	return children;
+}

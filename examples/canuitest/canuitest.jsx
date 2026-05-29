@@ -1,6 +1,6 @@
 import {GPIO_PROFILE, MOTOR_PROFILE, openDevice,
 		renderController, Menu, MenuItem, ObjectEditor,
-		useBack, useEncoderButton, useEventUpdate} from "peabrain";
+		useBack, useEncoderButton, useEventUpdate, StatusCover} from "peabrain";
 
 function InfoItem({label, value}) {
 	let back=useBack();
@@ -38,14 +38,16 @@ function CanDeviceList() {
 
 function App({devices}) {
 	return (
-		<Menu title="Hello">
-			<MenuItem title="Info">
-				<Info/>
-			</MenuItem>
-			<MenuItem title="CAN Devices">
-				<CanDeviceList/>
-			</MenuItem>
-		</Menu>
+		<StatusCover>
+			<Menu title="Hello">
+				<MenuItem title="Info">
+					<Info/>
+				</MenuItem>
+				<MenuItem title="CAN Devices">
+					<CanDeviceList/>
+				</MenuItem>
+			</Menu>
+		</StatusCover>
 	);
 };
 
@@ -53,16 +55,10 @@ let m=getMasterDevice();
 let devices={};
 
 devices.gpio=openDevice(5,GPIO_PROFILE);
+renderController(<App devices={devices}/>);
+
 //await devices.gpio.awaitState("operational");
 
 devices.gpio.mode_1=1;
 devices.gpio.mode_2=1;
 await devices.gpio.flush();
-
-renderController(<App devices={devices}/>);
-
-//generateerror();
-
-/*getBus().on("slcan",s=>{
-	console.log("msg: "+s);
-});*/
