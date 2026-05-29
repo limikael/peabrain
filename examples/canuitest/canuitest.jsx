@@ -57,8 +57,10 @@ let devices={};
 devices.gpio=openDevice(5,GPIO_PROFILE);
 renderController(<App devices={devices}/>);
 
-//await devices.gpio.awaitState("operational");
+await devices.gpio.awaitState("operational");
 
 devices.gpio.mode_1=1;
 devices.gpio.mode_2=1;
 await devices.gpio.flush();
+
+//awfawawef();

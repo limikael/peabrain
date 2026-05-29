@@ -121,8 +121,31 @@ export function useIsBootComplete() {
 	return (Sys.getInstance().isBootComplete());
 }
 
+export function useLatchedError() {
+	useEventUpdate(Sys.getInstance(),"latchedErrorChange");
+	return (Sys.getInstance().getLatchedError());
+}
+
 export function StatusCover({children}) {
 	let bootComplete=useIsBootComplete();
+	let latchedError=useLatchedError();
+
+	function ErrorDialog() {
+		useEncoderButton(()=>Sys.getInstance().dismissError());
+		return ["Err:",latchedError,"","    [ Dismiss ]     "];
+	}
+
+	function BootErrorDialog() {
+		useEncoderButton(()=>Sys.getInstance().scheduleRestart(true));
+		return ["Boot Error:",latchedError,"","     [ Reboot ]     "];
+	}
+
+	if (!bootComplete && latchedError)
+		return <BootErrorDialog />
+
+	if (latchedError)
+		return <ErrorDialog />
+
 	if (!bootComplete)
 		return ["Booting..."];
 
