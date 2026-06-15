@@ -2,7 +2,7 @@ import {useEncoderButton, useEncoderDelta} from "./device-ui.js";
 import {useEventUpdate, useBack} from "./components.jsx";
 import {useRef, useRefresh, useState, useEffect} from "./reactive-tui.js";
 
-export function ObjectEditor({name, title, entry, min, max, step}) {
+export function ObjectEditor({name, title, entry, min, max, step, disabled}) {
 	let back=useBack();
 	useEncoderButton(()=>back());
 	let delta=useEncoderDelta();
@@ -17,7 +17,7 @@ export function ObjectEditor({name, title, entry, min, max, step}) {
 	if (!step)
 		step=1;
 
-	if (delta) {
+	if (delta && !disabled) {
 		let v=entry.getInt()+delta*step;
 		if (v<min)
 			v=min;

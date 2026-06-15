@@ -75,9 +75,10 @@ void MotorController::begin() {
     digitalWrite(dirPin,LOW);
     digitalWrite(enaPin,HIGH);
 
-    timer=timerBegin(0, 80, true); // 1 microsec per tick, 20000 Hz
+    // 1 microsec per tick, 50000 Hz
+    timer=timerBegin(0, 80, true); 
     timerAttachInterrupt(timer,&onTimer,true);
-    timerAlarmWrite(timer,50,true);
+    timerAlarmWrite(timer,20,true);
     timerAlarmEnable(timer);
 }
 
@@ -99,7 +100,7 @@ void MotorController::loop() {
 	    device->at(baseIndex+DOFFS_ACTUAL_POSITION,baseSubIndex)->setInt(motion.current_pos);
 
 	    targetSteps=motion.current_pos;
-        actualStepsMillisPerTick=roundAwayFromZero(motion.current_vel * (1000.0 / 20000));
+        actualStepsMillisPerTick=roundAwayFromZero(motion.current_vel * (1000.0 / 50000));
         if (!actualStepsMillisPerTick)
             actualStepsMillisPerTick=((targetSteps>actualSteps)?1:-1);
     }
@@ -117,7 +118,7 @@ void MotorController::loop() {
     else {
         digitalWrite(enaPin,HIGH);
         if (debugTimer.tick()) {
-            Serial.printf("idle...\n");
+            //Serial.printf("idle...\n");
         }
     }
 }

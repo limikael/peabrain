@@ -8,3 +8,5 @@
 #define M0_PIN 0
 #define	M1_PIN 1
 #define	M2_PIN 3
+#define LIMIT_A_PIN 7
+#define LIMIT_B_PIN 20

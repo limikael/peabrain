@@ -6,6 +6,9 @@ export default {
 		"maxAcceleration": {"index": 0x6083, subIndex: 0},
 		"maxDeceleration": {"index": 0x6084, subIndex: 0},
 		"control": {"index": 0x6040, subIndex: 0},
-		"polarity": {"index": 0x607e, subIndex: 0}
+		"polarity": {"index": 0x607e, subIndex: 0},
+		"limitA": {"index": 0x6000, subIndex: 1},
+		"limitB": {"index": 0x6000, subIndex: 2},
+		"microstep": {"index": 0x2000, subIndex: 0}
 	}
 };

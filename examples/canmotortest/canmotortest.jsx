@@ -28,40 +28,34 @@ function App({devices}) {
 			<MenuItem title="Info">
 				<Info/>
 			</MenuItem>
-			<Menu title="CAN Registers">
+			<ObjectEditor title="Motor" entry={devices.motor.at("targetPosition")} step={100}/>
+			<Menu title="CAN entries">
+				<ObjectEditor title="Limit A" entry={devices.motor.at("limitA")} disabled/>
 			</Menu>
 		</Menu>
 	);
 };
 
-//				<ObjectEditor title="Motor" entry={devices.motor.at("targetPosition")} step={100}/>
-
-/*
-				<ObjectEditor title="Blink 1" entry={devices.gpio.at("output_1")} max={1}/>
-				<ObjectEditor title="Blink 2" entry={devices.gpio.at("output_2")} max={1}/>
-*/
 
 let devices={};
-/*devices.gpio=openDevice(5,GPIO_PROFILE);
-await devices.gpio.awaitState("operational");
+globalThis.devices=devices;
 
-devices.gpio.mode_1=1;
-devices.gpio.mode_2=1;
-await devices.gpio.flush();*/
-
-/*devices.motor=openDevice(91,MOTOR_PROFILE);
+devices.motor=openDevice(91,MOTOR_PROFILE);
 await devices.motor.awaitState("operational");
 devices.motor.polarity=7; //7;
-devices.motor.maxAcceleration=10000;
-devices.motor.maxDeceleration=10000;
-devices.motor.maxVelocity=16000; //16000;
+/*devices.motor.maxAcceleration=12800;
+devices.motor.maxDeceleration=12800;
+devices.motor.maxVelocity=12800; //16000;*/
+devices.motor.microstep=3;
+devices.motor.maxAcceleration=1600*4;
+devices.motor.maxDeceleration=1600*4;
+devices.motor.maxVelocity=1600*4; //16000;
 devices.motor.control=0x0f;
 devices.motor.at("targetPosition").refresh();
 devices.motor.at("actualPosition").refresh();
-await devices.motor.flush();*/
+devices.motor.at("limitA").subscribe(1);
+await devices.motor.flush();
 
 renderController(<App devices={devices}/>);
 
-getBus().on("slcan",s=>{
-	console.log("msg: "+s);
-});
+//getBus().on("slcan",s=>{ console.log("msg: "+s); });

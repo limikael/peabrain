@@ -10,6 +10,7 @@ using namespace canopener;
 
 const char *hardError=nullptr;
 SoftTimer errorTimer(100);
+SoftTimer timer(100);
 Blinker blink;
 auto espBus=std::make_shared<EspBus>(5,4);
 auto dev=std::make_shared<Device>(espBus);
@@ -55,6 +56,9 @@ void setup() {
     motorController.setDirPin(prefs.getUChar("dirPin"));
     motorController.setEnaPin(prefs.getUChar("enaPin"));
 #else
+    pinMode(LIMIT_A_PIN,INPUT);
+    pinMode(LIMIT_B_PIN,INPUT);
+
     blink.setPin(STATUS_LED_PIN);
     dev->setNodeId(DEVICE_ID);
 
@@ -70,21 +74,42 @@ void setup() {
     motorController.setEnaPin(ENA_PIN);
 #endif
 
+    dev->insert(0x6000,0x01)->setType(Entry::UINT32);
+    dev->insert(0x6000,0x02)->setType(Entry::UINT32);
+    dev->insert(0x2000,0x00)->setType(Entry::UINT32);
+
     motorController.setBaseIndex(0x6000);
     motorController.setBaseSubIndex(0x00);
     motorController.begin();
 }
 
 void loop() {
+    int v;
+
+    v=digitalRead(LIMIT_A_PIN);
+    if (v!=dev->at(0x6000,0x01)->getInt())
+        dev->at(0x6000,0x01)->setInt(v);
+
+    v=digitalRead(LIMIT_B_PIN);
+    if (v!=dev->at(0x6000,0x02)->getInt())
+        dev->at(0x6000,0x02)->setInt(v);
+
+    int m0Pin,m1Pin,m2Pin;
+
 #ifdef SETTINGS_FROM_NVS
-    digitalWrite(prefs.getUChar("m0Pin"),HIGH);
-    digitalWrite(prefs.getUChar("m1Pin"),HIGH);
-    digitalWrite(prefs.getUChar("m2Pin"),HIGH);
+    m0Pin=prefs.getUChar("m0Pin");
+    m1Pin=prefs.getUChar("m1Pin");
+    m2Pin=prefs.getUChar("m2Pin");
 #else
-    digitalWrite(M0_PIN,HIGH);
-    digitalWrite(M1_PIN,HIGH);
-    digitalWrite(M2_PIN,HIGH);
+    m0Pin=M0_PIN;
+    m1Pin=M1_PIN;
+    m2Pin=M2_PIN;
 #endif
+
+    int microstep=dev->at(0x2000,0)->getInt();
+    digitalWrite(m0Pin,microstep&0x01);
+    digitalWrite(m1Pin,microstep&0x02);
+    digitalWrite(m2Pin,microstep&0x04);
 
 	blink.loop();
     if (hardError) {
@@ -93,6 +118,10 @@ void loop() {
             Serial.printf("%s\n",hardError);
 
         return;
+    }
+
+    if (timer.tick()) {
+        //Serial.printf("limits: %d %d\n",digitalRead(LIMIT_A_PIN),digitalRead(LIMIT_B_PIN));
     }
 
     espBus->loop();
