@@ -74,6 +74,14 @@ export function declareDiode(sch, ref, type) {
             });
             break;
 
+        case "red":
+            return sch.declare(ref,{
+                symbol: "Device:LED",
+                footprint: "Diode_SMD:D_0603_1608Metric",
+                lcsc: "C2286"
+            });
+            break;
+
         default:
             throw new Error("unknown diode: "+type);
     }

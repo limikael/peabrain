@@ -16,6 +16,12 @@ export default async function(sch, {variant}) {
 	let r4=declareResistor(sch,"R4",330);
 	let d1=declareDiode(sch,"D1","ss14");
 
+	let indLed=[], indRes=[];
+	for (let i=11; i<=18; i++) {
+		indLed.push(declareDiode(sch,`D${i}`,"red"));
+		indRes.push(declareResistor(sch,`R${i}`,1000));
+	}
+
 	// Status LED
 	j5.pin(1).connect("3V3");
 	r4.connect(esp32.gpio8,j5.pin(2));
@@ -42,6 +48,9 @@ export default async function(sch, {variant}) {
 	// Screw terminals
 	screw1.connect("GND","12V","CANH","CANL");
 
+	// Indication LEDs
+
+
 	/*
 		IO1  GPIO0  // 9
 		IO2  GPIO1  // 10
@@ -67,4 +76,18 @@ export default async function(sch, {variant}) {
 	screw4.pin(2).connect(esp32.gpio10); // io6
 	screw4.pin(3).connect(esp32.gpio20); // io7
 	screw4.pin(4).connect(esp32.gpio21); // io8
+
+	for (let i=0; i<8; i++) {
+		indLed[i].pin(2).connect(indRes[i].pin(2));
+		indLed[i].pin(1).connect("GND");
+	}
+
+	indRes[0].pin(1).connect(esp32.gpio0); // io1
+	indRes[1].pin(1).connect(esp32.gpio1); // io2
+	indRes[2].pin(1).connect(esp32.gpio3); // io3
+	indRes[3].pin(1).connect(esp32.gpio6); // io4
+	indRes[4].pin(1).connect(esp32.gpio7); // io5
+	indRes[5].pin(1).connect(esp32.gpio10); // io6
+	indRes[6].pin(1).connect(esp32.gpio20); // io7
+	indRes[7].pin(1).connect(esp32.gpio21); // io8
 }
