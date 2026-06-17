@@ -24,7 +24,8 @@ function declareIR2104(sch, ref) {
     let c=sch.declare(ref, {
         symbol: "Driver_FET:IR2104",   // adjust to your KiCad lib name
         footprint: "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm",
-        lcsc: "C5804631"
+        lcsc: "C5804631",
+        lcscRot: -90,
     });
 
     return compoundSymbol(c).namePins(["vcc","in","shutdown","com","lo","vs","ho","vb"]);
@@ -35,7 +36,8 @@ function declareMosfetD2PAK(sch, ref) {
     let c=sch.declare(ref, {
         symbol: "Transistor_FET:Q_NMOS_GDS",
         footprint: "Package_TO_SOT_SMD:TO-263-2",
-        lcsc: "C409762"
+        lcsc: "C409762",
+        lcscRot: 180
     });
 
     return compoundSymbol(c).namePins(["gate","drain","source"]);

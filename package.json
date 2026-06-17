@@ -12,7 +12,9 @@
     "pcb:relay": "kisch pcb/relay/relay.kicad_sch -s pcb/relay/relay.js -L /home/micke/Repo.ext/kicad-symbols/",
     "pcb:discrete-motor": "kisch pcb/discrete-motor/discrete-motor.kicad_sch -s pcb/discrete-motor/discrete-motor.js -L /home/micke/Repo.ext/kicad-symbols/",
     "fab:relay": "kicad-fab-export pcb/relay/relay.kicad_pcb -o pcb/relay/jlcpcb -F /home/micke/Repo.ext/kicad-footprints/",
-    "fab:gpio": "kicad-fab-export pcb/gpio/gpio.kicad_pcb -F /home/micke/Repo.ext/kicad-footprints/"
+    "fab:gpio": "kicad-fab-export pcb/gpio/gpio.kicad_pcb -F /home/micke/Repo.ext/kicad-footprints/",
+    "fab:liu": "kicad-fab-export pcb/liu/liu.kicad_pcb -F /home/micke/Repo.ext/kicad-footprints/",
+    "fab:discrete-motor": "kicad-fab-export pcb/discrete-motor/discrete-motor.kicad_pcb -F /home/micke/Repo.ext/kicad-footprints/"
   },
   "bin": {
     "peabrain": "js/tools/peabrain-cli.js"

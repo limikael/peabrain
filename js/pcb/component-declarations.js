@@ -41,9 +41,15 @@ export function declareResistor(sch, ref, ohm) {
         4700: "C23162"
     };
 
-    let footprint="Resistor_SMD:R_0603_1608Metric";
+    let footprint;
     if (ohm==0.01 || ohm==0.1)
         footprint="Resistor_SMD:R_1206_3216Metric";
+
+    else if (ohm==10)
+        footprint="Resistor_SMD:R_0402_1005Metric";
+
+    else
+        footprint="Resistor_SMD:R_0603_1608Metric"
 
     if (!partsByOhm[ohm])
         throw new Error("not found!");
@@ -90,7 +96,7 @@ export function declareDiode(sch, ref, type) {
 export function declareCapacitor(sch, ref, farad) {
     let partsByFarad={
         "47u": "C76659",
-        "100n": "C53084461"
+        "100n": "C1590", //"C53084461"
     };
 
     if (!partsByFarad[farad])
