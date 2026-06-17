@@ -15,6 +15,12 @@ export default async function(sch, {variant}) {
 	let r4=declareResistor(sch,"R4",330);
 	let j6=declareMalePinHeader(sch,"J6",4); // I2C
 	let j7=declareMalePinHeader(sch,"J7",5); // Encoder knob
+	let esp32co=declareEsp32(sch,"U9","U10");
+	let r5=declareResistor(sch,"R5",1000);
+	let r6=declareResistor(sch,"R6",1000);
+	let r7=declareResistor(sch,"R7",1000);
+	let r8=declareResistor(sch,"R8",1000);
+	let r9=declareResistor(sch,"R9",1000);
 
 	// power
 	mp1584.vin.connect("12V");
@@ -55,4 +61,15 @@ export default async function(sch, {variant}) {
 	j7.pin(3).connect(esp32.gpio10); // sw
 	j7.pin(4).connect(esp32.gpio20); // dt
 	j7.pin(5).connect(esp32.gpio21); // clk
+
+	// co-mcu
+	esp32co._5v.connect("5V");
+	esp32co._3v3.connect("3V3");
+	esp32co.gnd.connect("GND");
+
+	r5.connect(esp32co.gpio0,esp32.gpio0);
+	r6.connect(esp32co.gpio1,esp32.gpio1);
+	r7.connect(esp32co.gpio2,esp32.gpio2);
+	r8.connect(esp32co.gpio3,esp32.gpio3);
+	r9.connect(esp32co.gpio9,esp32.gpio9);
 }
