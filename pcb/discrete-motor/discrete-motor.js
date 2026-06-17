@@ -67,7 +67,7 @@ export function declareHalfBridge(sch, postfix) {
     cboot.connect(driver.vb,driver.vs);
 
     // power
-    driver.vcc.connect("12V");
+    driver.vcc.connect("VMOT");
     driver.com.connect("GND");
 
     // low side
@@ -76,7 +76,7 @@ export function declareHalfBridge(sch, postfix) {
     rl.connect(driver.lo, ql.gate);
 
     // high side
-    qh.drain.connect("12V");
+    qh.drain.connect("VMOT");
     qh.source.connect(driver.vs);
     rh.connect(driver.ho, qh.gate);
 
@@ -151,6 +151,8 @@ export default async function(sch, {variant}) {
 
     // Screw terminals
     screw1.connect("GND","12V","CANH","CANL");
+    screw2.pin(1).connect("GND");
+    screw2.pin(2).connect("VMOT");
 
     // h-bridges
     let h1=declareHalfBridge(sch,"10");
