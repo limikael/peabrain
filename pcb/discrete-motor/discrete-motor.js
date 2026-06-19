@@ -158,22 +158,22 @@ export default async function(sch, {variant}) {
     let h1=declareHalfBridge(sch,"10");
     h1.in.connect(esp32.gpio6);
     h1.out.connect(screw4.pin(1));
-    h1.shutdown.connect(esp32.gpio21);
+    h1.shutdown.connect(esp32.gpio2);
 
     let h2=declareHalfBridge(sch,"11");
     h2.in.connect(esp32.gpio7);
     h2.out.connect(screw4.pin(2));
-    h2.shutdown.connect(esp32.gpio21);
+    h2.shutdown.connect(esp32.gpio2);
 
     let h3=declareHalfBridge(sch,"12");
     h3.in.connect(esp32.gpio10);
     h3.out.connect(screw4.pin(3));
-    h3.shutdown.connect(esp32.gpio21);
+    h3.shutdown.connect(esp32.gpio2);
 
     let h4=declareHalfBridge(sch,"13");
     h4.in.connect(esp32.gpio20);
     h4.out.connect(screw4.pin(4));
-    h4.shutdown.connect(esp32.gpio21);
+    h4.shutdown.connect(esp32.gpio2);
 
     // sensors
     let s1=declareCurrentSensor(sch,"10");
@@ -185,4 +185,25 @@ export default async function(sch, {variant}) {
     h3.return.connect(s2.in);
     h4.return.connect(s2.in);
     s2.out.connect(esp32.gpio3);
+
+    // limit switch components
+    let r2 = declareResistor(sch,"R2",4700);
+    let r3 = declareResistor(sch,"R3",4700);
+    let c2 = declareCapacitor(sch,"C2","100n");
+    let c3 = declareCapacitor(sch,"C3","100n");
+
+    screw3.pin(1).connect("GND");
+    screw3.pin(3).connect("GND");
+
+    // --- Limit switch SW1 (GPIO0) ---
+    let sw1 = screw3.pin(2);
+    r2.connect("3V3", sw1);
+    c2.connect(sw1, "GND");
+    esp32.gpio0.connect(sw1);
+
+    // --- Limit switch SW2 (GPIO2) ---
+    let sw2 = screw3.pin(4);
+    r3.connect("3V3", sw2);
+    c3.connect(sw2, "GND");
+    esp32.gpio21.connect(sw2);
 }

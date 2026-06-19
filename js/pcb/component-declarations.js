@@ -35,7 +35,7 @@ export function declareResistor(sch, ref, ohm) {
     let partsByOhm={
         0.01: "C104920", // 1206
         0.1: "C25334", // 1206
-        10: "C174147",
+        10: "C22859", //"C174147",
         330: "C23138",
         1000: "C21190",
         4700: "C23162"
@@ -44,9 +44,6 @@ export function declareResistor(sch, ref, ohm) {
     let footprint;
     if (ohm==0.01 || ohm==0.1)
         footprint="Resistor_SMD:R_1206_3216Metric";
-
-    else if (ohm==10)
-        footprint="Resistor_SMD:R_0402_1005Metric";
 
     else
         footprint="Resistor_SMD:R_0603_1608Metric"
