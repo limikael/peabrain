@@ -97,7 +97,9 @@ void MotorController::loop() {
 	    motion.max_decel=device->at(baseIndex+DOFFS_PROFILE_MAX_DECEL,baseSubIndex)->getInt();
 
 	    update_trapezoidal_motion(&motion,deltaTime/1000.0);
-	    device->at(baseIndex+DOFFS_ACTUAL_POSITION,baseSubIndex)->setInt(motion.current_pos);
+        int pos=motion.current_pos;
+        if (device->at(baseIndex+DOFFS_ACTUAL_POSITION,baseSubIndex)->getInt()!=pos)
+    	    device->at(baseIndex+DOFFS_ACTUAL_POSITION,baseSubIndex)->setInt(pos);
 
 	    targetSteps=motion.current_pos;
         actualStepsMillisPerTick=roundAwayFromZero(motion.current_vel * (1000.0 / 50000));
