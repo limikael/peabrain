@@ -7,7 +7,7 @@ void ui_setup() {
     Wire.begin(8,9); // SDA, SLC - Old Bali milled boards
     //Wire.begin(6,7); // SDA, SLC - JLCPCB boards
     Wire.setClock(400000);
-    Lcd::getInstance();
+    Lcd::getInstance()->begin();
 }
 
 void ui_start() {

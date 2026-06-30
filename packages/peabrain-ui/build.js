@@ -13,7 +13,8 @@ export async function build(ev) {
 	ev.addSetupFunction("ui_setup");
 	ev.addStartFunction("ui_start");
 	ev.addLoopFunction("ui_loop");
-	ev.addLibDep("https://github.com/markub3327/LiquidCrystal_I2C");
+	//ev.addLibDep("https://github.com/markub3327/LiquidCrystal_I2C");
+	//ev.addLibDep("Wire");
 }
 
 export async function bundleConf(ev) {

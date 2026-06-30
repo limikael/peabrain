@@ -11,8 +11,6 @@ static const int8_t transitionTable[16] = {
 EncoderKnob::EncoderKnob(int a, int b)
     : pinA(a), pinB(b) {}
 
-//Encoder::Encoder() {}
-
 void EncoderKnob::begin() {
     pinMode(pinA, INPUT_PULLUP);
     pinMode(pinB, INPUT_PULLUP);
@@ -45,12 +43,3 @@ void EncoderKnob::loop() {
         changeEvent.emit(reportedValue);
     }
 }
-
-/*uint8_t EncoderKnob::readValue() {
-    reportedValue=getValue();
-    return reportedValue;
-}
-
-bool EncoderKnob::isChanged() {
-    return (reportedValue!=getValue());
-}*/
