@@ -1,4 +1,6 @@
 #include "DebouncePin.h"
+#include "esp_timer.h"
+#include "driver/gpio.h"
 
 DebouncePin::DebouncePin(
     int8_t pin_,
@@ -10,24 +12,41 @@ DebouncePin::DebouncePin(
       _changed(false),
       _lastChangeTime(0)
 {
-    pinMode(pin, pullup ? INPUT_PULLUP : INPUT);
+    //pinMode(pin, pullup ? INPUT_PULLUP : INPUT);
 
     _lastRaw = readRaw();
     _value   = _lastRaw;
 }
 
 void DebouncePin::begin() {
-    pinMode(pin, INPUT_PULLUP); //pullup ? INPUT_PULLUP : INPUT);
+    #if defined(ARDUINO)
+        pinMode(pin, INPUT_PULLUP); //pullup ? INPUT_PULLUP : INPUT);
+
+    #elif defined(ESP_PLATFORM)
+        gpio_set_direction((gpio_num_t)pin, GPIO_MODE_INPUT);
+        gpio_set_pull_mode((gpio_num_t)pin, GPIO_PULLUP_ONLY);
+    #endif
 }
 
 bool DebouncePin::readRaw() const {
     // If using INPUT_PULLUP, LOW = pressed
-    return digitalRead(pin) == HIGH;
+    #ifdef ARDUINO
+        return digitalRead(pin) == HIGH;
+
+    #elif defined(ESP_PLATFORM)
+        return gpio_get_level((gpio_num_t)pin);
+    #endif
 }
 
 void DebouncePin::update() {
     bool raw = readRaw();
-    unsigned long now = millis();
+    unsigned long now;
+
+    #ifdef ARDUINO
+    now=millis();
+    #elif defined(ESP_PLATFORM)
+    now=esp_timer_get_time()/1000;
+    #endif
 
     if (raw != _lastRaw) {
         _lastRaw = raw;

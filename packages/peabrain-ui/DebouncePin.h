@@ -1,5 +1,7 @@
 #pragma once
+#ifdef ARDUINO
 #include <Arduino.h>
+#endif
 #include "peabind.h"
 
 class DebouncePin {

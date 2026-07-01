@@ -1,12 +1,7 @@
 #include "peabrain-ui.h"
-#include <Arduino.h>
 #include "Lcd.h"
 
 void ui_setup() {
-    //#error "set pins!!!"
-    Wire.begin(8,9); // SDA, SLC - Old Bali milled boards
-    //Wire.begin(6,7); // SDA, SLC - JLCPCB boards
-    Wire.setClock(400000);
     Lcd::getInstance()->begin();
 }
 

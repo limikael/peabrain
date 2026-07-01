@@ -1,19 +1,73 @@
 #include "Lcd.h"
+
+#ifdef ARDUINO
 #include <Wire.h>
+#endif
+
+#ifndef ARDUINO
+#include "driver/i2c_master.h"
+#include <esp_rom_sys.h>
+inline void delayMicroseconds(uint32_t us) {
+    esp_rom_delay_us(us);
+}
+
+i2c_master_bus_handle_t bus;
+i2c_master_dev_handle_t lcd;
+#endif
 
 Lcd::Lcd() {
 	reset();
 }
 
 void Lcd::begin() {
+	#ifdef ARDUINO
+		Wire.begin(8,9); // SDA, SLC - Old Bali milled boards
+	    //Wire.begin(6,7); // SDA, SLC - JLCPCB boards
+	    Wire.setClock(400000);
+	#endif
+
+	#ifndef ARDUINO
+		i2c_master_bus_config_t bus_config = {};
+		bus_config.i2c_port = I2C_NUM_0;
+		bus_config.sda_io_num = GPIO_NUM_8;
+		bus_config.scl_io_num = GPIO_NUM_9;
+		bus_config.clk_source = I2C_CLK_SRC_DEFAULT;
+		bus_config.glitch_ignore_cnt = 7;
+		bus_config.flags.enable_internal_pullup = true;
+
+		/*i2c_master_bus_config_t bus_config = {
+		    .i2c_port = I2C_NUM_0,
+		    .sda_io_num = GPIO_NUM_8,
+		    .scl_io_num = GPIO_NUM_9,
+		    .clk_source = I2C_CLK_SRC_DEFAULT,
+		    .glitch_ignore_cnt = 7,
+		    .flags.enable_internal_pullup = true,
+		};*/
+
+		ESP_ERROR_CHECK(i2c_new_master_bus(&bus_config, &bus));
+
+		i2c_device_config_t dev_cfg = {};
+		dev_cfg.dev_addr_length = I2C_ADDR_BIT_LEN_7;
+		dev_cfg.device_address = 0x27;
+		dev_cfg.scl_speed_hz = 400000;
+
+		/*i2c_device_config_t dev_cfg = {
+		    .dev_addr_length = I2C_ADDR_BIT_LEN_7,
+		    .device_address = 0x27,
+		    .scl_speed_hz = 100000,
+		};*/
+
+		ESP_ERROR_CHECK(i2c_master_bus_add_device(bus, &dev_cfg, &lcd));
+	#endif
+ 
 	// SEE PAGE 45/46 FOR INITIALIZATION SPECIFICATION!
 	// according to datasheet, we need at least 40ms after power rises above 2.7V
 	// before sending commands. Arduino can turn on way befer 4.5V so we'll wait 50
-	delay(50); 
+	delayMicroseconds(50000); 
 
 	// Now we pull both RS and R/W low to begin commands
 	expanderWrite(LCD_BACKLIGHT);//_backlightval);	// reset expanderand turn backlight off (Bit 8 =1)
-	delay(1000);
+	delayMicroseconds(1000000);
 
 		//put the LCD into 4 bit mode
 	// this is according to the hitachi HD44780 datasheet
@@ -90,9 +144,22 @@ void Lcd::expanderWrite(uint8_t data) {
 	//#define LCD_BACKLIGHT 0x08
 	//#define LCD_NOBACKLIGHT 0x00
 
-	Wire.beginTransmission(0x27); // addr
-	Wire.write((int)(data) | LCD_BACKLIGHT); // or with backlight
-	Wire.endTransmission();   
+	data|=LCD_BACKLIGHT;
+
+	#ifdef ARDUINO
+		Wire.beginTransmission(0x27); // addr
+		Wire.write(data);
+		Wire.endTransmission();   
+	#else
+	    ESP_ERROR_CHECK(
+	        i2c_master_transmit(
+	            lcd,
+	            &data,
+	            1,
+	            -1
+	        )
+	    );
+	#endif
 }
 
 void Lcd::pulseEnable(uint8_t data){

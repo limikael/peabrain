@@ -1,6 +1,13 @@
 #pragma once
-#include <Arduino.h>
 #include "peabind.h"
+
+#ifdef ARDUINO
+#include <Arduino.h>
+#endif
+
+#ifdef ESP_PLATFORM
+#include "esp_attr.h"
+#endif
 
 class EncoderKnob {
 public:

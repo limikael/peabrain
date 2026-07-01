@@ -7,5 +7,11 @@
   },
   "dependencies": {
     "peabrain": "^1.0.0"
-  }
+  },
+  "enablePlugins": [
+    "pk-idf"
+  ],
+  "disablePlugins": [
+    "pk-pio"
+  ]
 }

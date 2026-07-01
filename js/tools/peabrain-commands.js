@@ -7,7 +7,9 @@ let __dirname=dirnameFromImportMeta(import.meta);
 build.priority=5;
 export async function build(ev) {
     console.log("**** peabrain build ****");
-	ev.setBoard("esp32-c3-devkitm-1");
+    if (!ev.board)
+    	ev.setBoard("esp32-c3-devkitm-1");
+
     if (ev.env.PEAKERNEL_CAN_PINS)
         throw new Error("Don't set CAN pins, they are fixed...");
 

@@ -1,8 +1,11 @@
 #pragma once
 #include <memory>
 #include <string>
+
+#ifdef ARDUINO
 #include <Arduino.h>
 #include <Wire.h>
+#endif
 
 // commands
 #define LCD_CLEARDISPLAY 0x01

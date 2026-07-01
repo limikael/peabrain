@@ -40,16 +40,16 @@ function App({devices}) {
 let devices={};
 globalThis.devices=devices;
 
-devices.motor=openDevice(91,MOTOR_PROFILE);
+devices.motor=openDevice(92,MOTOR_PROFILE);
 await devices.motor.awaitState("operational");
 devices.motor.polarity=7; //7;
 /*devices.motor.maxAcceleration=12800;
 devices.motor.maxDeceleration=12800;
 devices.motor.maxVelocity=12800; //16000;*/
-devices.motor.microstep=3;
+devices.motor.microstep=2;
 devices.motor.maxAcceleration=1600*4;
 devices.motor.maxDeceleration=1600*4;
-devices.motor.maxVelocity=1600*4; //16000;
+devices.motor.maxVelocity=1600*5; //16000;
 devices.motor.control=0x0f;
 devices.motor.at("targetPosition").refresh();
 devices.motor.at("actualPosition").refresh();

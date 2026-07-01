@@ -6,6 +6,9 @@ let BackContext=createContext();
 export function useEventUpdate(obj, event="change") {
 	let refresh=useRefresh();
 	useEffect(()=>{
+		if (!obj || !obj.on)
+			return;
+
 		function handleChange() {
 			refresh();
 		}
